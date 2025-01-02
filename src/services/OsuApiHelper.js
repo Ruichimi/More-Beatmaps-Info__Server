@@ -23,11 +23,32 @@ class OsuApiHelper {
     getMapsetData = async (mapsetId) => {
         const response = await axios.get(this.baseUrl + `beatmapsets/${mapsetId}`, {
             headers: {
-                'Authorization': `Bearer ${this.accessToken}`, 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.accessToken}`,
+                'Content-Type': 'application/json',
             },
         });
-        console.log(response.data);
-        return response.data;
+
+        const filteredData = this.filterBeatmapsetData(response.data);
+        console.log(filteredData);
+        return filteredData;
+    }
+
+    filterBeatmapsetData(rawObject) {
+        const allowedFields =
+            [
+                'id',
+                'title',
+                'creator',
+                'beatmaps',
+                'status',
+                'ranked_date',
+                'submitted_date',
+                'bpm'
+            ];
+
+        return Object.fromEntries(
+            Object.entries(rawObject).filter(([key]) => allowedFields.includes(key))
+        );
     }
 
     getBeatmapData = async (beatmapId) => {
