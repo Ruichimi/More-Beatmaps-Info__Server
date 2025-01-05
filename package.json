@@ -22,6 +22,7 @@
     "cors": "^2.8.5",
     "curl": "^0.1.4",
     "express": "^4.19.2",
+    "redis": "^4.7.0",
     "rosu-pp-js": "^2.0.0"
   },
   "devDependencies": {

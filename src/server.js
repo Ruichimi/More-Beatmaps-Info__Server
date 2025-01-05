@@ -6,6 +6,8 @@ const path = require('path');
 const osuApiHelper = require(path.resolve(__dirname, './services/OsuApiHelper'));
 const rosu = require("rosu-pp-js");
 
+app.use(express.json({ limit: '1mb' }));
+
 app.use(cors());
 
 app.get('/', async (req, res) => {
@@ -35,18 +37,16 @@ app.get('/api/BeatmapData/:id', async (req, res) => {
 });
 
 app.post('/api/BeatmapPP/:id', express.json(), async (req, res) => {
-    const { id } = req.params;
+    const { id: beatmapId } = req.params;
     const { beatmap } = req.body;
     try {
-        console.log("ID:", id);
-        console.log("Beatmap:", beatmap);
-        const map = new rosu.Beatmap(beatmap);
-        const maxAttrs = new rosu.Performance({ mods: "CL" }).calculate(map);
-        res.json(maxAttrs);
-    } catch (error) {
-        console.error("Ошибка получения данных:", error);
+        const calculatedBeatmapData = await osuApiHelper.getBeatmapData(beatmapId, beatmap);
+        console.log(calculatedBeatmapData);
+        res.json(calculatedBeatmapData);
+    } catch(error) {
         res.status(500).json({ error: "Ошибка получения данных" });
     }
+
 });
 
 app.listen(port, async () => {
