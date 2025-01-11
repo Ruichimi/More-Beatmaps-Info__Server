@@ -21,7 +21,8 @@ class OsuApiHelper extends CacheManager {
         });
 
         this.accessToken = response.data.access_token;
-        this.loadBeatmapsetsItemsToRamFromFile();
+        this.loadObjectItemsToRamFromFile('beatmapset');
+        this.loadObjectItemsToRamFromFile('beatmap');
     }
 
     getMapsetData = async (mapsetId) => {
@@ -50,7 +51,11 @@ class OsuApiHelper extends CacheManager {
             console.log("Getting pp for beatmap: ", beatmapId);
             const map = new rosu.Beatmap(beatmapStructure);
             const fullCalcBeatmapData = new rosu.Performance({mods: "CL"}).calculate(map);
-            return this.filterCalculatedBeatmapData(fullCalcBeatmapData);
+            let filteredFullBeatmapData =  this.filterCalculatedBeatmapData(fullCalcBeatmapData);
+            filteredFullBeatmapData = {...filteredFullBeatmapData, id: beatmapId}
+            this.cacheBeatmap(filteredFullBeatmapData);
+            console.log(filteredFullBeatmapData);
+            return filteredFullBeatmapData;
         } catch (error) {
             console.error("Ошибка получения данных:", error);
             throw new Error(`Failed to calculate beatmap data: ${error}`);

@@ -3,6 +3,7 @@ const fs = require("fs");
 class FileCacher {
     constructor() {
         this.beatmapsetsCacheFilePath = './beatmapsetsCache.json';
+        this.beatmapsCacheFilePath = './beatmapsCache.json';
     }
 
     /*
@@ -34,13 +35,19 @@ class FileCacher {
         }
     }
 
-    getEntireBeatmapsetsCache() {
+    getEntireBeatmapsetsCache(objectType) {
+        let path;
+        if (objectType === 'beatmapset') {
+            path = this.beatmapsetsCacheFilePath
+        } else if (objectType === 'beatmap') {
+            path = this.beatmapsCacheFilePath;
+        }
         try {
-            if (!fs.existsSync(this.beatmapsetsCacheFilePath)) {
+            if (!fs.existsSync(path)) {
                 console.log('Файл кэша не найден.');
                 return;
             }
-            const data = fs.readFileSync(this.beatmapsetsCacheFilePath, 'utf-8');
+            const data = fs.readFileSync(path, 'utf-8');
             const parsedData = JSON.parse(data);
 
             if (typeof parsedData !== 'object' || parsedData === null) {
@@ -53,25 +60,44 @@ class FileCacher {
         }
     }
 
-    writeToFile(data) {
-        fs.writeFileSync(this.beatmapsetsCacheFilePath, JSON.stringify(data, null, 2), 'utf8');
-    }
-
-    async appendToFile(data) {
-        let currentData = {};
-        try {
-            const rawData = fs.readFileSync(this.beatmapsetsCacheFilePath, 'utf8');
-            currentData = JSON.parse(rawData);
-        } catch (err) {
-            console.log('Файл пуст или ошибка чтения:', err);
+    writeToFile(data, cacheType) {
+        let path = null;
+        if (cacheType === 'beatmapset') {
+            path = this.beatmapsetsCacheFilePath
+        } else if (cacheType === 'beatmap') {
+            path = this.beatmapsCacheFilePath
         }
-        const newKey = data.id;
-        currentData[newKey] = data;
         try {
-            fs.writeFileSync(this.beatmapsetsCacheFilePath, JSON.stringify(currentData, null, 2), 'utf8');
+            fs.writeFileSync(path, JSON.stringify(data, null, 2), 'utf8');
         } catch (err) {
             console.error('Ошибка записи файла:', err);
         }
+    }
+
+    async appendToFile(data, cacheType) {
+        let currentData;
+        let fileData = null;
+        try {
+            if (cacheType === 'beatmapset') {
+                fileData = fs.readFileSync(this.beatmapsetsCacheFilePath, 'utf8');
+            } else if (cacheType === 'beatmap') {
+                try {
+                    fileData = fs.readFileSync(this.beatmapsCacheFilePath, 'utf8');
+                } catch (err) {
+                    fileData = null;
+                }
+            }
+        } catch (err) {
+            console.log('Файл пуст или ошибка чтения:', err);
+        }
+        if (!fileData) {
+            currentData = {}
+        } else {
+            currentData = JSON.parse(fileData);
+        }
+        const newKey = data.id;
+        currentData[newKey] = data;
+        this.writeToFile(currentData, cacheType);
     }
 }
 

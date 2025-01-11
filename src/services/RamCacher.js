@@ -13,24 +13,34 @@ class RamCacher {
         }
     }
 
-    loadBeatmapsetToRam(beatmapsetData, beatmapsetsCacheLimit) {
-        if (!beatmapsetData || typeof beatmapsetData !== 'object') {
+    loadObjectToRam(object, cacheLimit, cacheDataType) {
+        if (!object || typeof object !== 'object') {
             console.log('Неверные данные для загрузки.');
             return;
         }
 
-        if (this.beatmapsetsCache.size >= beatmapsetsCacheLimit) {
-            console.log('Превышен лимит кэша, загрузка остановлена.');
-            return this.beatmapsetsCache.size;
+        let cache = null;
+        if (cacheDataType === 'beatmapset') {
+            cache = this.beatmapsetsCache;
+        } else if (cacheDataType === 'beatmap') {
+            cache = this.beatmapsCache;
+        } else {
+            throw new Error('Неверный тип объекта для кеша доступны: \'beatmapset\', \'beatmap\'');
         }
-        if (beatmapsetData.id) {
-            this.beatmapsetsCache.set(String(beatmapsetData.id), beatmapsetData);
-            console.log('Загрузили в кеш');
+
+        if (cache.size >= cacheLimit) {
+            console.log('Превышен лимит кэша, загрузка остановлена.');
+            return cache.size;
+        }
+
+        if (object.id) {
+            cache.set(String(object.id), object);
+            console.log(`Загрузили в кеш ${cacheDataType} c id: ${object.id}`);
         } else {
             console.log('Отсутствует уникальный идентификатор для beatmapset.');
         }
 
-        return this.beatmapsetsCache.size;
+        return cache.size;
     }
 
     clearOldBeatmapsets(count) {

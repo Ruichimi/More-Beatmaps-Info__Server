@@ -18,19 +18,25 @@ class CacheManager {
     }
 
     cacheBeatmapset(mapsetData) {
+        console.log(mapsetData);
         if (RamCacher.beatmapsetsCache.size >= this.beatmapSetsCacheLimit) {
             const clearedRamData = RamCacher.clearOldBeatmapsets(this.beatmapSetsCacheCleanItems);
-            FileCacher.writeToFile(clearedRamData)
+            FileCacher.writeToFile(clearedRamData, 'beatmapset')
         }
-        RamCacher.loadBeatmapsetToRam(mapsetData);
-        FileCacher.appendToFile(mapsetData);
+        RamCacher.loadObjectToRam(mapsetData, this.beatmapSetsCacheLimit, 'beatmapset');
+        FileCacher.appendToFile(mapsetData, 'beatmapset');
     }
 
-    loadBeatmapsetsItemsToRamFromFile() {
-        const mapsetsFileCached = FileCacher.getEntireBeatmapsetsCache();
+    cacheBeatmap(beatmapData) {
+        FileCacher.appendToFile(beatmapData, 'beatmap');
+        console.log('Добавили подсчитаные данные карты в кеш');
+    }
+
+    loadObjectItemsToRamFromFile(dataType) {
+        const mapsetsFileCached = FileCacher.getEntireBeatmapsetsCache(dataType);
 
         for (const [, mapset] of Object.entries(mapsetsFileCached)) {
-            RamCacher.loadBeatmapsetToRam(mapset, this.beatmapSetsCacheLimit);
+            RamCacher.loadObjectToRam(mapset, this.beatmapSetsCacheLimit, dataType);
         }
     }
 
@@ -69,7 +75,7 @@ class CacheManager {
         if (cacheType === 'ram') {
             parsedData = RamCacher.getBeatmapsetsCacheObject();
         } else if (cacheType === 'file') {
-            parsedData = FileCacher.getEntireBeatmapsetsCache();
+            parsedData = FileCacher.getEntireBeatmapsetsCache('beatmapset');
         } else {
             console.log('Попытка получить неверный тип кеша, доступные типы: \'ram\' \'file\'');
         }
