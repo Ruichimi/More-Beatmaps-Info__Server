@@ -29,7 +29,7 @@ class CacheManager {
     loadBeatmapsetsItemsToRamFromFile() {
         const mapsetsFileCached = FileCacher.getEntireBeatmapsetsCache();
 
-        for (const [key, mapset] of Object.entries(mapsetsFileCached)) {
+        for (const [, mapset] of Object.entries(mapsetsFileCached)) {
             RamCacher.loadBeatmapsetToRam(mapset, this.beatmapSetsCacheLimit);
         }
     }
@@ -84,7 +84,15 @@ class CacheManager {
         return { sizeInBytes, numberOfEntries };
     }
 
-
+    getBeatmapsetByIdCache(id, cacheType) {
+        if (cacheType === 'ram') {
+           return RamCacher.getBeatmapsetById(id);
+        } else if(cacheType === 'file') {
+            return FileCacher.getObjectFromCache(id);
+        } else {
+            console.log('Неверный тип кеша: cacheType, доступные типы: \'ram\' \'file\'');
+        }
+    }
 }
 
-module.exports = new CacheManager();
+module.exports = CacheManager;

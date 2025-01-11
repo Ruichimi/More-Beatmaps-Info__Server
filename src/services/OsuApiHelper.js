@@ -4,8 +4,9 @@ const env = require(path.resolve(process.cwd(), './env.json'));
 const rosu = require("rosu-pp-js");
 const CacheManager = require("./CacheManager");
 
-class OsuApiHelper {
+class OsuApiHelper extends CacheManager {
     constructor() {
+        super();
         this.baseUrl = 'https://osu.ppy.sh/api/v2/';
         this.clientId = env.osuApi.clientId;
         this.clientSecret = env.osuApi.clientSecret;
@@ -20,11 +21,11 @@ class OsuApiHelper {
         });
 
         this.accessToken = response.data.access_token;
-        CacheManager.loadBeatmapsetsItemsToRamFromFile();
+        this.loadBeatmapsetsItemsToRamFromFile();
     }
 
     getMapsetData = async (mapsetId) => {
-        const cachedBeatmap = CacheManager.getBeatmapsetFromCache(mapsetId);
+        const cachedBeatmap = this.getBeatmapsetFromCache(mapsetId);
         if (cachedBeatmap) {
             return cachedBeatmap;
         }
@@ -36,10 +37,10 @@ class OsuApiHelper {
             },
         });
 
-        let filteredData = CacheManager.filterBeatmapsetData(response.data);
-        filteredData = CacheManager.filterBeatmapsetDate(filteredData);
+        let filteredData = this.filterBeatmapsetData(response.data);
+        filteredData = this.filterBeatmapsetDate(filteredData);
 
-        CacheManager.cacheBeatmapset(filteredData);
+        this.cacheBeatmapset(filteredData);
 
         return filteredData;
     }
@@ -68,9 +69,6 @@ class OsuApiHelper {
             },
             pp: fullCalcObject.pp,
         };
-    }
-    getCacheSize(cacheType) {
-        return CacheManager.getCacheSize(cacheType);
     }
 }
 

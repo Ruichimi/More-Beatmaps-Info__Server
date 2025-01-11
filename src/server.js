@@ -59,6 +59,8 @@ app.listen(port, async () => {
 
 
 commandsRunning({
-    "beatmapsets-file-cache-size": () => console.log('Размер долгого кеша:', OsuApi.getCacheSize('file')),
-    "ram-cache-size": () => console.log('Размер кеша оперативной памяти:', OsuApi.getCacheSize('ram')),
+    "file-cache-size-bs": () => console.log('Размер долгого кеша:', OsuApi.getCacheSize('file')),
+    "ram-cache-size-bs": () => console.log('Размер кеша оперативной памяти:', OsuApi.getCacheSize('ram')),
+    "file-cached-bs": (id) => console.log('Карта из долгого кеша:', OsuApi.getBeatmapsetByIdCache(id, 'file')),
+    "ram-cached-bs": (id) => console.log('Карта из кеша оперативной памяти:', OsuApi.getBeatmapsetByIdCache(id, 'ram')),
 });

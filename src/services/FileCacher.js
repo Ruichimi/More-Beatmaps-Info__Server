@@ -5,6 +5,35 @@ class FileCacher {
         this.beatmapsetsCacheFilePath = './beatmapsetsCache.json';
     }
 
+    /*
+     * This function retrieves an object from the cache stored in a file.
+     * It loads the entire file into memory (RAM) and then tries to find and return the object by the given key.
+     * If the cache file doesn't exist or the object with the specified key is not found, an error message is logged.
+     * Important: Since the data is loaded into RAM, using this function may lead to memory overload when dealing with large amounts of data.
+     * This function is primarily intended for debugging purposes.
+     */
+    getObjectFromCache(key) {
+        try {
+            if (!fs.existsSync(this.beatmapsetsCacheFilePath)) {
+                console.log('Файл кэша не найден.');
+                return null;
+            }
+
+            const data = fs.readFileSync(this.beatmapsetsCacheFilePath, 'utf-8');
+            const parsedData = JSON.parse(data);
+
+            if (parsedData.hasOwnProperty(key)) {
+                return parsedData[key];
+            } else {
+                console.log(`Объект с ключом ${key} не найден.`);
+                return null;
+            }
+        } catch (error) {
+            console.error(`Ошибка при получении объекта из кэша: ${error.message}`);
+            return null;
+        }
+    }
+
     getEntireBeatmapsetsCache() {
         try {
             if (!fs.existsSync(this.beatmapsetsCacheFilePath)) {
@@ -42,29 +71,6 @@ class FileCacher {
             fs.writeFileSync(this.beatmapsetsCacheFilePath, JSON.stringify(currentData, null, 2), 'utf8');
         } catch (err) {
             console.error('Ошибка записи файла:', err);
-        }
-    }
-
-    getCacheSize() {
-        try {
-            if (!fs.existsSync(this.beatmapsetsCacheFilePath)) {
-                console.log('Файл кэша не найден.');
-                return { sizeInBytes: 0, numberOfEntries: 0 };
-            }
-            const data = fs.readFileSync(this.beatmapsetsCacheFilePath, 'utf-8');
-            const parsedData = JSON.parse(data);
-
-            if (typeof parsedData !== 'object' || parsedData === null) {
-                console.log('Файл кэша содержит некорректные данные.');
-                return { sizeInBytes: 0, numberOfEntries: 0 };
-            }
-
-            const sizeInBytes = fs.statSync(this.beatmapsetsCacheFilePath).size;
-            const numberOfEntries = Object.keys(parsedData).length;
-
-            return { sizeInBytes, numberOfEntries };
-        } catch (error) {
-            throw new Error(`Не удалось получить размер кэша: ${error.message}`);
         }
     }
 }

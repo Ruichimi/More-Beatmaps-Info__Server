@@ -8,9 +8,13 @@ function commandsRunning(commands) {
     });
 
     rl.on('line', (input) => {
-        const command = input.trim();
+        const args = input.trim().split(' ');
+        const command = args[0];
+        const commandArgs = args.slice(1);
+
         if (commands[command]) {
-            commands[command]();
+            // Передаем аргументы команды
+            commands[command](...commandArgs);
         } else {
             console.log(`Неизвестная команда: ${command}`);
         }
