@@ -1,9 +1,7 @@
 class RamCacher {
     constructor() {
         this.beatmapsetsCache = new Map();
-        this.beatmapCache = new Map();
-        this.beatmapsetsCacheCount = 0;
-        this.beatmapsCacheCount = 0;
+        this.beatmapsCache = new Map();
     }
 
     getBeatmapsetById(beatmapsetId) {
@@ -11,7 +9,6 @@ class RamCacher {
         if (this.beatmapsetsCache.has(id)) {
             return this.beatmapsetsCache.get(id);
         } else {
-            //console.log(`Beatmapset с ID ${id} не найден.`);
             return null;
         }
     }
@@ -26,28 +23,17 @@ class RamCacher {
             console.log('Превышен лимит кэша, загрузка остановлена.');
             return this.beatmapsetsCache.size;
         }
-
         if (beatmapsetData.id) {
             this.beatmapsetsCache.set(String(beatmapsetData.id), beatmapsetData);
-            this.beatmapsetsCacheCount++;
-            console.log(`Добавлен новый beatmapset в кэш. Текущее количество элементов: ${this.beatmapsetsCacheCount}`);
+            console.log('Загрузили в кеш');
         } else {
             console.log('Отсутствует уникальный идентификатор для beatmapset.');
         }
+
         return this.beatmapsetsCache.size;
     }
 
-    clearBeatmapsetsCache() {
-        this.beatmapsetsCache.clear();
-    }
-
     clearOldBeatmapsets(count) {
-        if (count <= 0) {
-            console.log('Указано некорректное количество для удаления.');
-            return;
-        }
-
-        // Получаем массив объектов с ключами и значениями, отсортированных по дате
         const sortedEntries = [...this.beatmapsetsCache.entries()].sort((a, b) => {
             const dateA = new Date(a[1].date);
             const dateB = new Date(b[1].date);
@@ -56,16 +42,18 @@ class RamCacher {
 
         let deletedItemsCount = 0;
 
-        // Удаляем самые старые элементы
         for (let i = 0; i < count && i < sortedEntries.length; i++) {
             const [key] = sortedEntries[i];
             this.beatmapsetsCache.delete(key);
-            this.beatmapsetsCacheCount--;
             deletedItemsCount++;
         }
 
-        console.log(`Текущее количество элементов в кэше: ${this.beatmapsetsCache.size}`);
         console.log(`Удаленно ${deletedItemsCount} карт из кэша`);
+        console.log(`Текущее количество элементов в кэше: ${this.beatmapsetsCache.size}`);
+        return Object.fromEntries(this.beatmapsetsCache);
+    }
+
+    getBeatmapsetsCacheObject() {
         return Object.fromEntries(this.beatmapsetsCache);
     }
 }

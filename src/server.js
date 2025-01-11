@@ -3,11 +3,10 @@ const app = express();
 const port = 3000;
 const cors = require('cors');
 const path = require('path');
-const osuApiHelper = require(path.resolve(__dirname, './services/OsuApiHelper'));
-const rosu = require("rosu-pp-js");
+const OsuApi = require(path.resolve(__dirname, './services/OsuApiHelper'));
+const { commandsRunning } = require('./commands/ServerRunningCommandsInterface');
 
 app.use(express.json({ limit: '1mb' }));
-
 app.use(cors());
 
 app.get('/', async (req, res) => {
@@ -17,7 +16,7 @@ app.get('/', async (req, res) => {
 app.get('/api/MapsetData/:id', async (req, res) => {
     const mapsetId = req.params.id;
     try {
-        const data = await osuApiHelper.getMapsetData(mapsetId);
+        const data = await OsuApi.getMapsetData(mapsetId);
         res.json(data);
     } catch (error) {
         console.error("Ошибка получения данных:", error);
@@ -28,7 +27,7 @@ app.get('/api/MapsetData/:id', async (req, res) => {
 app.get('/api/BeatmapData/:id', async (req, res) => {
     const beatmapId = req.params.id;
     try {
-        const data = await osuApiHelper.getBeatmapData(beatmapId);
+        const data = await OsuApi.getBeatmapData(beatmapId);
         res.json(data);
     } catch (error) {
         console.error("Ошибка получения данных:", error);
@@ -40,21 +39,26 @@ app.post('/api/BeatmapPP/:id', express.json(), async (req, res) => {
     const { id: beatmapId } = req.params;
     const { beatmap } = req.body;
     try {
-        const calculatedBeatmapData = await osuApiHelper.getBeatmapData(beatmapId, beatmap);
+        const calculatedBeatmapData = await OsuApi.getBeatmapData(beatmapId, beatmap);
         console.log(calculatedBeatmapData);
         res.json(calculatedBeatmapData);
-    } catch(error) {
+    } catch (error) {
         res.status(500).json({ error: "Ошибка получения данных" });
     }
-
 });
 
 app.listen(port, async () => {
     console.log(`Сервер запущен на http://localhost:${port}`);
     try {
-        await osuApiHelper.init();
+        await OsuApi.init();
         console.log("OsuApiHelper инициализирован.");
     } catch (error) {
         console.error("Ошибка при инициализации OsuApiHelper:", error);
     }
+});
+
+
+commandsRunning({
+    "beatmapsets-file-cache-size": () => console.log('Размер долгого кеша:', OsuApi.getCacheSize('file')),
+    "ram-cache-size": () => console.log('Размер кеша оперативной памяти:', OsuApi.getCacheSize('ram')),
 });

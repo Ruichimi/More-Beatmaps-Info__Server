@@ -3,8 +3,8 @@ const FileCacher = require("./FileCacher");
 
 class CacheManager {
     constructor() {
-        this.beatmapSetsCacheLimit = 100;
-        this.beatmapSetsCacheCleanItems = 50;
+        this.beatmapSetsCacheLimit = 1000;
+        this.beatmapSetsCacheCleanItems = 500;
         this.beatmapCacheLimit = 10000;
         this.beatmapCacheCleanItems = 5000;
     }
@@ -12,13 +12,13 @@ class CacheManager {
     getBeatmapsetFromCache(beatmapsetId) {
         const cachedMapset = RamCacher.getBeatmapsetById(beatmapsetId);
         if (cachedMapset) {
-            console.log('Received mapsetData from RAM cache');
+            console.log(`The beatmapset ${beatmapsetId} data received from RAM cache`);
             return cachedMapset;
         }
     }
 
     cacheBeatmapset(mapsetData) {
-        if (RamCacher.beatmapsetsCacheCount >= this.beatmapSetsCacheLimit) {
+        if (RamCacher.beatmapsetsCache.size >= this.beatmapSetsCacheLimit) {
             const clearedRamData = RamCacher.clearOldBeatmapsets(this.beatmapSetsCacheCleanItems);
             FileCacher.writeToFile(clearedRamData)
         }
@@ -63,6 +63,28 @@ class CacheManager {
         beatmapsetData.date = date;
         return beatmapsetData;
     }
+
+    getCacheSize(cacheType) {
+        let parsedData = null;
+        if (cacheType === 'ram') {
+            parsedData = RamCacher.getBeatmapsetsCacheObject();
+        } else if (cacheType === 'file') {
+            parsedData = FileCacher.getEntireBeatmapsetsCache();
+        } else {
+            console.log('Попытка получить неверный тип кеша, доступные типы: \'ram\' \'file\'');
+        }
+
+        if (typeof parsedData !== 'object' || parsedData === null) {
+            console.log('Файл кэша содержит некорректные данные.');
+            return { sizeInBytes: 0, numberOfEntries: 0 };
+        }
+        const sizeInBytes = new TextEncoder().encode(JSON.stringify(parsedData)).length;
+        const numberOfEntries = Object.keys(parsedData).length;
+
+        return { sizeInBytes, numberOfEntries };
+    }
+
+
 }
 
 module.exports = new CacheManager();

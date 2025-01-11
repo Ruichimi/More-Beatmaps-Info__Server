@@ -44,20 +44,6 @@ class OsuApiHelper {
         return filteredData;
     }
 
-    cleanFileCacheIfNeeded() {
-
-    }
-
-    // loadFromFile() {
-    //     try {
-    //         const rawData = fs.readFileSync(this.beatmapsetsCacheFilePath, 'utf8');
-    //         return JSON.parse(rawData);
-    //     } catch (err) {
-    //         console.error('Ошибка при чтении файла:', err);
-    //         return null;
-    //     }
-    // }
-
     async getBeatmapData(beatmapId, beatmapStructure) {
         try {
             console.log("Getting pp for beatmap: ", beatmapId);
@@ -82,6 +68,9 @@ class OsuApiHelper {
             },
             pp: fullCalcObject.pp,
         };
+    }
+    getCacheSize(cacheType) {
+        return CacheManager.getCacheSize(cacheType);
     }
 }
 
