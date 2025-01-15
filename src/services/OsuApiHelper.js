@@ -30,7 +30,7 @@ class OsuApiHelper extends CacheManager {
         if (cachedBeatmap) {
             return cachedBeatmap;
         }
-
+        console.log('Карты в кеше нет, выдаём через апи');
         const response = await axios.get(this.baseUrl + `beatmapsets/${mapsetId}`, {
             headers: {
                 'Authorization': `Bearer ${this.accessToken}`,
@@ -38,12 +38,9 @@ class OsuApiHelper extends CacheManager {
             },
         });
 
-        let filteredData = this.filterBeatmapsetData(response.data);
-        filteredData = this.filterBeatmapsetDate(filteredData);
+        this.cacheBeatmapset(response.data);
 
-        this.cacheBeatmapset(filteredData);
-
-        return filteredData;
+        return response.data;
     }
 
     async getBeatmapData(beatmapId, beatmapStructure) {

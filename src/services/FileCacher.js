@@ -13,7 +13,7 @@ class FileCacher {
      * Important: Since the data is loaded into RAM, using this function may lead to memory overload when dealing with large amounts of data.
      * This function is primarily intended for debugging purposes.
      */
-    getObjectFromCache(key) {
+    getBeatmapsetFromCacheByKey(key) {
         try {
             if (!fs.existsSync(this.beatmapsetsCacheFilePath)) {
                 console.log('Файл кэша не найден.');
@@ -38,7 +38,7 @@ class FileCacher {
     getEntireBeatmapsetsCache(objectType) {
         let path;
         if (objectType === 'beatmapset') {
-            path = this.beatmapsetsCacheFilePath
+            path = this.beatmapsetsCacheFilePath;
         } else if (objectType === 'beatmap') {
             path = this.beatmapsCacheFilePath;
         }
@@ -60,11 +60,11 @@ class FileCacher {
         }
     }
 
-    writeToFile(data, cacheType) {
+    writeToFile(data, objectType) {
         let path = null;
-        if (cacheType === 'beatmapset') {
+        if (objectType === 'beatmapset') {
             path = this.beatmapsetsCacheFilePath
-        } else if (cacheType === 'beatmap') {
+        } else if (objectType === 'beatmap') {
             path = this.beatmapsCacheFilePath
         }
         try {
@@ -74,13 +74,13 @@ class FileCacher {
         }
     }
 
-    async appendToFile(data, cacheType) {
+    async appendToFile(data, objectType) {
         let currentData;
         let fileData = null;
         try {
-            if (cacheType === 'beatmapset') {
+            if (objectType === 'beatmapset') {
                 fileData = fs.readFileSync(this.beatmapsetsCacheFilePath, 'utf8');
-            } else if (cacheType === 'beatmap') {
+            } else if (objectType === 'beatmap') {
                 try {
                     fileData = fs.readFileSync(this.beatmapsCacheFilePath, 'utf8');
                 } catch (err) {
@@ -95,9 +95,11 @@ class FileCacher {
         } else {
             currentData = JSON.parse(fileData);
         }
-        const newKey = data.id;
-        currentData[newKey] = data;
-        this.writeToFile(currentData, cacheType);
+
+        // const newData = {...data, date: Date.now()}
+        currentData = { ...currentData, ...data };
+
+        this.writeToFile(currentData, objectType);
     }
 }
 
