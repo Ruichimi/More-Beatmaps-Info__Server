@@ -6,43 +6,39 @@ class CacheManager {
     constructor() {
         this.beatmapSetsCacheLimit = 1000;
         this.beatmapSetsCacheCleanItems = 500;
-        this.beatmapCacheLimit = 5;
-        this.beatmapCacheCleanItems = 3;
+        this.beatmapCacheLimit = 500;
+        this.beatmapCacheCleanItems = 300;
     }
 
-    getBeatmapsetFromCache(beatmapsetId) {
-        const cachedMapset = RamCacher.getBeatmapsetById(beatmapsetId);
-        if (cachedMapset) {
-            console.log(`The beatmapset ${beatmapsetId} data received from RAM cache`);
-            return cachedMapset;
+    getObjectFromCache(objectId, objectType) {
+        const cachedObject = RamCacher.getObjectById(objectId, objectType);
+        if (cachedObject) {
+            console.log(`The ${objectType} ${objectId} data received from RAM cache`);
+            return cachedObject;
         }
     }
 
     cacheBeatmapset(mapsetData) {
         let filteredMapset = BeatmapsFilter.filterBeatmapset(mapsetData);
-        if (RamCacher.beatmapsetsCache.size >= this.beatmapSetsCacheLimit) {
-            const clearedRamData = RamCacher.clearOldObjectsByDate('beatmapsets', this.beatmapSetsCacheCleanItems);
-            FileCacher.writeToFile(clearedRamData, 'beatmapset')
-        }
-        const mapsetId = filteredMapset.id;
-        filteredMapset = { [mapsetId]: filteredMapset };
-
-        FileCacher.appendToFile(filteredMapset, 'beatmapset');
-        RamCacher.setBeatmapset(filteredMapset, mapsetId, this.beatmapSetsCacheLimit, 'beatmapset');
+        this.cacheObject(filteredMapset, 'beatmapset', this.beatmapSetsCacheLimit, this.beatmapSetsCacheCleanItems);
     }
 
     cacheBeatmap(beatmapData) {
-        //if (RamCacher.beatmapsCache.size >= this.beatmapCacheLimit) {}
-        console.log(RamCacher.beatmapsCache.size, this.beatmapCacheLimit);
-        if (RamCacher.beatmapsCache.size >= this.beatmapCacheLimit) {
-            console.log('Кеш карт переполнен очищаем');
-            const clearedRamData = RamCacher.clearOldObjectsByDate('beatmaps', this.beatmapCacheCleanItems);
-            FileCacher.writeToFile(clearedRamData, 'beatmaps')
+        let filteredBeatmapData = BeatmapsFilter.filterBeatmap(beatmapData);
+        this.cacheObject(filteredBeatmapData, 'beatmap', this.beatmapCacheLimit, this.beatmapCacheCleanItems);
+    }
+
+    cacheObject(object, objectType, cacheLimit, cacheSize, cleanItems) {
+        if (RamCacher[`${objectType}sCache`].size >= cacheLimit) {
+            const clearedRamData = RamCacher.clearOldObjectsByDate(objectType, cleanItems);
+            FileCacher.writeToFile(clearedRamData, objectType);
         }
-        beatmapData.date = Date.now();
-        FileCacher.appendToFile(beatmapData, 'beatmap');
-        RamCacher.setBeatmapset(beatmapData, this.beatmapCacheLimit, 'beatmap');
-        console.log('Добавили подсчитаные данные карты в кеш');
+        object.date = Date.now();
+        const objectId = String(object.id);
+        delete object.id;
+
+        FileCacher.appendToFile(object, objectId, objectType);
+        RamCacher.setObject(object, objectId, cacheLimit, objectType);
     }
 
     loadObjectItemsToRamFromFile(dataType) {
@@ -50,7 +46,7 @@ class CacheManager {
         const mapsetsFileCached = FileCacher.getEntireBeatmapsetsCache(dataType);
 
         for (const [key, mapset] of Object.entries(mapsetsFileCached)) {
-            RamCacher.setBeatmapset(mapset, key, this.beatmapSetsCacheLimit, dataType);
+            RamCacher.setObject(mapset, key, this.beatmapSetsCacheLimit, dataType);
             cachedItemsCount++;
         }
         console.log(`${cachedItemsCount} ${dataType}s загруженны в оперативную память`);
@@ -76,18 +72,30 @@ class CacheManager {
         return {sizeInBytes, numberOfEntries};
     }
 
-    getBeatmapsetByIdCache(id, cacheType) {
-        if (cacheType === 'ram') {
-            return RamCacher.getBeatmapsetById(id);
-        } else if (cacheType === 'file') {
-            return FileCacher.getBeatmapsetFromCacheByKey(id);
-        } else {
-            console.log('Неверный тип кеша: cacheType, доступные типы: \'ram\' \'file\'');
-        }
+    getBeatmapsetByIdCache(id, raw = false) {
+        if (raw) return RamCacher.beatmapsetsCache.get(id);
+        return RamCacher.getObjectById(id, 'beatmapset');
+    }
+
+    getBeatmapByIdCache(id, raw = false) {
+        if (raw) return RamCacher.beatmapsCache.get(id);
+        return RamCacher.getObjectById(id, 'beatmap');
     }
 
     getEntireBeatmapsetCache() {
         return RamCacher.beatmapsetsCache;
+    }
+
+    getEntireBeatmapsCache() {
+        return RamCacher.beatmapsCache;
+    }
+
+    getBeatmapsetByIdCacheFile(id) {
+        try {
+            return FileCacher.getBeatmapsetFromCacheByKey(id);
+        } catch (err) {
+            console.log(`Не удалось получить карту из файла кеша ${err}`);
+        }
     }
 }
 

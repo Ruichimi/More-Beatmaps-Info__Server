@@ -6,7 +6,7 @@ class BeatmapsFilter {
             "title": "t",
             "bpm": "b",
             "date": "d",
-            "beatmaps": [
+            "beatmaps":
                 {
                     "difficulty_rating": "dr",
                     "id": "id",
@@ -18,8 +18,21 @@ class BeatmapsFilter {
                     "drain": "d",
                     "max_combo": "mc"
                 }
-            ]
         };
+
+        this.beatmapMinifizeKeysList = {
+            "difficulty": {
+                "aim": "a",
+                "speed": "s",
+                "nCircles": "nc",
+                "nSliders": "ns",
+                "speedNoteCount": "sn",
+                "flashlight": "f"
+            },
+            "pp": "p",
+            "id": "i",
+            "date": "t"
+        }
     }
 
     filterBeatmapset(rawObject) {
@@ -60,42 +73,75 @@ class BeatmapsFilter {
     }
 
     minimizeBeatmapset(beatmapsetData) {
-        return this.processMinify(beatmapsetData);
+        return this.processMinify(beatmapsetData, this.beatmapsetMinifizeKeysList);
     }
 
     reMinimizeBeatmapset(minimizedBeatmapsetData) {
-        return this.processMinify(minimizedBeatmapsetData, true);
+        return this.processMinify(minimizedBeatmapsetData, this.beatmapsetMinifizeKeysList, true);
     }
 
-    processMinify(beatmapsetObject, isMinimised = false) {
+    minimizeBeatmap(beatmapData) {
+        return this.processMinify(beatmapData, this.beatmapMinifizeKeysList);
+    }
+
+    reMinimizeBeatmap(minimizedBeatmapData) {
+        return this.processMinify(minimizedBeatmapData, this.beatmapMinifizeKeysList, true);
+    }
+
+    processMinify(beatmapsetObject, objectListKeys, isMinimised = false) {
+        let subObject = null;
         for (let key in beatmapsetObject) {
-            if (key !== 'beatmaps') {
+            if (key !== 'beatmaps' && key !== 'difficulty') {
                 const targetKey = isMinimised
-                    ? Object.keys(this.beatmapsetMinifizeKeysList).find(k => this.beatmapsetMinifizeKeysList[k] === key)
-                    : this.beatmapsetMinifizeKeysList[key];
+                    ? Object.keys(objectListKeys).find(k => objectListKeys[k] === key)
+                    : objectListKeys[key];
 
                 if (targetKey && targetKey !== key) {
                     beatmapsetObject[targetKey] = beatmapsetObject[key];
                     delete beatmapsetObject[key];
                 }
+            } else {
+                subObject = key;
             }
         }
-        if (beatmapsetObject.beatmaps) {
-            beatmapsetObject.beatmaps.forEach((bmObject) => {
-                for (let key in bmObject) {
-                    const targetKey = isMinimised
-                        ? Object.keys(this.beatmapsetMinifizeKeysList.beatmaps[0])
-                            .find(k => this.beatmapsetMinifizeKeysList.beatmaps[0][k] === key)
-                        : this.beatmapsetMinifizeKeysList.beatmaps[0][key];
 
-                    if (targetKey && targetKey !== key) {
-                        bmObject[targetKey] = bmObject[key];
-                        delete bmObject[key];
-                    }
+        const filterFunk = (bmObject) => {
+            for (let key in bmObject) {
+                const targetKey = isMinimised
+                    ? Object.keys(objectListKeys[subObject])
+                        .find(k => objectListKeys[subObject][k] === key)
+                    : objectListKeys[subObject][key];
+
+                if (targetKey && targetKey !== key) {
+                    bmObject[targetKey] = bmObject[key];
+                    delete bmObject[key];
                 }
-            });
+            }
+        };
+
+        if (beatmapsetObject[subObject]) {
+            if (subObject === 'beatmaps') {
+                //console.log('Фильтруем под-объект как массив');
+                beatmapsetObject[subObject].forEach((bmObject) => {
+                    filterFunk(bmObject);
+                });
+            } else if(subObject === 'difficulty') {
+                //console.log('Фильтруем под-объект как объект');
+                filterFunk(beatmapsetObject[subObject]);
+            }
         }
         return beatmapsetObject;
+    }
+
+    filterBeatmap(beatmap) {
+        for (let key in beatmap) {
+            if (typeof beatmap[key] === 'number') {
+                beatmap[key] = parseFloat(beatmap[key].toFixed(2));
+            } else if (typeof beatmap[key] === 'object' && beatmap[key] !== null) {
+                this.filterBeatmap(beatmap[key]);
+            }
+        }
+        return beatmap;
     }
 }
 

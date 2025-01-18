@@ -40,7 +40,6 @@ app.post('/api/BeatmapPP/:id', express.json(), async (req, res) => {
     const { beatmap } = req.body;
     try {
         const calculatedBeatmapData = await OsuApi.getBeatmapData(beatmapId, beatmap);
-        console.log(calculatedBeatmapData);
         res.json(calculatedBeatmapData);
     } catch (error) {
         res.status(500).json({ error: "Ошибка получения данных" });
@@ -61,7 +60,12 @@ app.listen(port, async () => {
 commandsRunning({
     "file-cache-size-bs": () => console.log('Размер долгого кеша:', OsuApi.getCacheSize('file')),
     "ram-cache-size-bs": () => console.log('Размер кеша оперативной памяти:', OsuApi.getCacheSize('ram')),
-    "entire-ram-cache": () => console.log('Кеш оперативной памяти:', OsuApi.getEntireBeatmapsetCache()),
+
+    "entire-ram-cache-bs": () => console.log('Кеш оперативной памяти:', OsuApi.getEntireBeatmapsetCache()),
+    "entire-ram-cache-bm": () => console.log('Кеш оперативной памяти:', OsuApi.getEntireBeatmapsCache()),
+
     "file-cached-bs": (id) => console.log('Карта из долгого кеша:', OsuApi.getBeatmapsetByIdCache(id, 'file')),
-    "ram-cached-bs": (id) => console.log('Карта из кеша оперативной памяти:', OsuApi.getBeatmapsetByIdCache(id, 'ram')),
+
+    "ram-cached-bs": (id, raw) => console.log('Карта из кеша оперативной памяти:', OsuApi.getBeatmapsetByIdCache(id, raw)),
+    "ram-cached-bm": (id, raw) => console.log('Карта из кеша оперативной памяти:', OsuApi.getBeatmapByIdCache(id, raw)),
 });

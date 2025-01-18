@@ -26,11 +26,9 @@ class OsuApiHelper extends CacheManager {
     }
 
     getMapsetData = async (mapsetId) => {
-        const cachedBeatmap = this.getBeatmapsetFromCache(mapsetId);
-        if (cachedBeatmap) {
-            return cachedBeatmap;
-        }
-        console.log('Карты в кеше нет, выдаём через апи');
+        const cachedBeatmapset = this.getObjectFromCache(mapsetId, 'beatmapset');
+        if (cachedBeatmapset) return cachedBeatmapset;
+
         const response = await axios.get(this.baseUrl + `beatmapsets/${mapsetId}`, {
             headers: {
                 'Authorization': `Bearer ${this.accessToken}`,
@@ -43,20 +41,29 @@ class OsuApiHelper extends CacheManager {
         return response.data;
     }
 
-    async getBeatmapData(beatmapId, beatmapStructure) {
+    getBeatmapData(beatmapId, beatmapStructure) {
+        const cachedBeatmap = this.getObjectFromCache(beatmapId, 'beatmap');
+        if (cachedBeatmap) return cachedBeatmap;
+
         try {
             console.log("Getting pp for beatmap: ", beatmapId);
-            const map = new rosu.Beatmap(beatmapStructure);
-            const fullCalcBeatmapData = new rosu.Performance({mods: "CL"}).calculate(map);
-            let filteredFullBeatmapData =  this.filterCalculatedBeatmapData(fullCalcBeatmapData);
-            filteredFullBeatmapData = {...filteredFullBeatmapData, id: beatmapId}
-            this.cacheBeatmap(filteredFullBeatmapData);
-            console.log(filteredFullBeatmapData);
-            return filteredFullBeatmapData;
+            const calculatedBeatmapData = this.getCalculatedBeatmapData(beatmapId, beatmapStructure);
+
+            const deepClonedData = JSON.parse(JSON.stringify(calculatedBeatmapData));
+
+            this.cacheBeatmap(deepClonedData);
+            return calculatedBeatmapData;
         } catch (error) {
             console.error("Ошибка получения данных:", error);
             throw new Error(`Failed to calculate beatmap data: ${error}`);
         }
+    }
+
+    getCalculatedBeatmapData(beatmapId, beatmapStructure) {
+        const map = new rosu.Beatmap(beatmapStructure);
+        const fullCalcBeatmapData = new rosu.Performance({mods: "CL"}).calculate(map);
+        let filteredFullBeatmapData =  this.filterCalculatedBeatmapData(fullCalcBeatmapData);
+        return {...filteredFullBeatmapData, id: Number(beatmapId)};
     }
 
     filterCalculatedBeatmapData(fullCalcObject) {

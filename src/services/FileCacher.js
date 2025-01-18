@@ -63,9 +63,9 @@ class FileCacher {
     writeToFile(data, objectType) {
         let path = null;
         if (objectType === 'beatmapset') {
-            path = this.beatmapsetsCacheFilePath
+            path = this.beatmapsetsCacheFilePath;
         } else if (objectType === 'beatmap') {
-            path = this.beatmapsCacheFilePath
+            path = this.beatmapsCacheFilePath;
         }
         try {
             fs.writeFileSync(path, JSON.stringify(data, null, 2), 'utf8');
@@ -74,7 +74,8 @@ class FileCacher {
         }
     }
 
-    async appendToFile(data, objectType) {
+    async appendToFile(object, objectId, objectType) {
+        const beatmapDataWithKey = { [objectId]: object };
         let currentData;
         let fileData = null;
         try {
@@ -96,8 +97,7 @@ class FileCacher {
             currentData = JSON.parse(fileData);
         }
 
-        // const newData = {...data, date: Date.now()}
-        currentData = { ...currentData, ...data };
+        currentData = { ...currentData, ...beatmapDataWithKey };
 
         this.writeToFile(currentData, objectType);
     }

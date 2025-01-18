@@ -13,7 +13,7 @@ program
     .command("cached-bs <id>")
     .description('')
     .action((id) => {
-        console.log(cacheManager.getBeatmapsetByIdCache(id, 'file'));
+        console.log(cacheManager.getBeatmapsetByIdCacheFile(id));
     });
 
 program.parse(process.argv);
