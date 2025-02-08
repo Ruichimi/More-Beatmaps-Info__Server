@@ -1,4 +1,4 @@
-const BeatmapsFilter = require('./BeatmapsFilter');
+const BeatmapsFilter = require('../BeatmapsFilter');
 
 class RamCacher {
     constructor() {

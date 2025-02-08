@@ -2,7 +2,7 @@ const path = require("path");
 const axios = require(path.resolve(__dirname, "./axios"));
 const env = require(path.resolve(process.cwd(), './env.json'));
 const rosu = require("rosu-pp-js");
-const CacheManager = require("./CacheManager");
+const CacheManager = require("./cache/CacheManager");
 const BeatmapsFilter = require('./BeatmapsFilter');
 
 class OsuApiHelper extends CacheManager {

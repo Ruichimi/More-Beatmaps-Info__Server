@@ -1,6 +1,6 @@
 const RamCacher = require("./RamCacher");
 const FileCacher = require("./FileCacher");
-const BeatmapsFilter = require('./BeatmapsFilter');
+const BeatmapsFilter = require('../BeatmapsFilter');
 
 class CacheManager {
     constructor() {

@@ -1,6 +1,6 @@
 const { Command } = require('commander');
 const program = new Command();
-const CacheManager = require('../Services/CacheManager');
+const CacheManager = require('../services/cache/CacheManager');
 const cacheManager = new CacheManager();
 program
     .command("cache-size")
