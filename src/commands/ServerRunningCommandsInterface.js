@@ -13,7 +13,6 @@ function commandsRunning(commands) {
         const commandArgs = args.slice(1);
 
         if (commands[command]) {
-            // Передаем аргументы команды
             commands[command](...commandArgs);
         } else {
             console.log(`Неизвестная команда: ${command}`);

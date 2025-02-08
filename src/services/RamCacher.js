@@ -7,88 +7,97 @@ class RamCacher {
     }
 
     getObjectById(objectId, objectType) {
-        const idString = String(objectId);
-
-        if (objectType === 'beatmap') {
-            if (this.beatmapsCache.has(idString)) {
-                console.log('Карта найдена в кеше');
-                const deepClonedData = JSON.parse(JSON.stringify(this.beatmapsCache.get(idString)));
-                let beatmapData = BeatmapsFilter.reMinimizeBeatmap(deepClonedData);
-
-                return {...beatmapData, id: Number(objectId)};
+        try {
+            const idString = String(objectId);
+            const cache = this.getCacheByType(objectType);
+            if (!cache.has(idString)) {
+                //console.log(`The object with id ${idString} has not found`);
+                return null;
             }
-        } else if(objectType === 'beatmapset') {
-            if (this.beatmapsetsCache.has(idString)) {
-                const deepClonedData = JSON.parse(JSON.stringify(this.beatmapsetsCache.get(idString)));
-                let beatmapsetData = BeatmapsFilter.reMinimizeBeatmapset(deepClonedData);
-                console.log(beatmapsetData);
-                console.log(beatmapsetData);
-                return {...beatmapsetData, id: Number(objectId)};
+
+            const deepClonedData = JSON.parse(JSON.stringify(cache.get(idString)));
+            let beatmapsetData = null;
+
+            if (objectType === 'beatmap') {
+                beatmapsetData = BeatmapsFilter.reMinimizeBeatmap(deepClonedData);
+            } else if (objectType === 'beatmapset') {
+                beatmapsetData = BeatmapsFilter.reMinimizeBeatmapset(deepClonedData);
             }
-        } else {
-            console.log(`Не удалось получить ${objectType} из RAM кеша, не верный тип. Доступные типы beatmap, beatmapset`);
+
+            return {...beatmapsetData, id: Number(objectId)};
+        } catch(err) {
+            throw new Error(`Failed to get ${objectType} from RAM cache, ${err.message}`);
         }
-        return null;
+
     }
 
     setObject(object, objectId, cacheLimit, objectType) {
-        if (!object || typeof object !== 'object') {
-            console.log('Неверные данные для загрузки.');
-            return;
-        }
+        try {
+            if (!object || typeof object !== 'object') {
+                console.log('Неверные данные для загрузки.');
+                return;
+            }
 
-        let cache = null;
-        if (objectType === 'beatmapset') {
-            object = BeatmapsFilter.minimizeBeatmapset(object);
-            object = BeatmapsFilter.removeUnusedFieldsFromBeatmapset(object);
-            cache = this.beatmapsetsCache;
-        } else if (objectType === 'beatmap') {
-            object = BeatmapsFilter.minimizeBeatmap(object);
+            let cache = this.getCacheByType(objectType);
+            if (objectType === 'beatmapset') {
+                object = BeatmapsFilter.minimizeBeatmapset(object);
+                object = BeatmapsFilter.removeUnusedFieldsFromBeatmapset(object);
+            } else if (objectType === 'beatmap') {
+                object = BeatmapsFilter.minimizeBeatmap(object);
+            }
 
-            cache = this.beatmapsCache;
-        } else {
-            throw new Error('Неверный тип объекта для кеша доступны: \'beatmapset\', \'beatmap\'');
-        }
-
-        if (cache.size >= cacheLimit) {
-            console.log('Превышен лимит кэша, загрузка остановлена.');
+            if (cache.size >= cacheLimit) {
+                console.log('Превышен лимит кэша, загрузка остановлена.');
+                return cache.size;
+            }
+            cache.set(objectId, object);
             return cache.size;
+        } catch (err) {
+            throw new Error(`Failed to set object ${objectType} in RAM cache ${err.message}`);
         }
-        cache.set(objectId, object);
-        return cache.size;
     }
 
     clearOldObjectsByDate(objectType, count) {
-        let cache;
-        if (objectType === 'beatmapsets') {
-            cache = this.beatmapsetsCache;
-        } else if (objectType === 'beatmaps') {
-            cache = this.beatmapsCache;
-        } else {
-            throw new Error('Unknown objectType. Use "beatmapsets" or "beatmaps".');
-        }
+        try {
+            const cache = this.getCacheByType(objectType);
 
-        const sortedEntries = [...cache.entries()].sort((a, b) => {
+            const sortedEntries = this.sortCacheByDate(cache);
+            let deletedItemsCount = 0;
+            console.log(sortedEntries.length);
+            for (let i = 0; i < count && i < sortedEntries.length; i++) {
+                const [key] = sortedEntries[i];
+                cache.delete(key);
+                deletedItemsCount++;
+            }
+
+            console.log(`Удалено ${deletedItemsCount} объектов из кэша "${objectType}"`);
+            console.log(`Текущее количество элементов в кэше "${objectType}": ${cache.size}`);
+            return Object.fromEntries(cache);
+        } catch(err) {
+            throw new Error(`Failed to clear ${objectType}s cache ${err.message}`);
+        }
+    }
+
+    sortCacheByDate(cache) {
+        return [...cache.entries()].sort((a, b) => {
             const dateA = new Date(a[1].date);
             const dateB = new Date(b[1].date);
             return dateA - dateB;
         });
-
-        let deletedItemsCount = 0;
-        for (let i = 0; i < count && i < sortedEntries.length; i++) {
-            const [key] = sortedEntries[i];
-            cache.delete(key);
-            deletedItemsCount++;
-        }
-
-        console.log(`Удалено ${deletedItemsCount} объектов из кэша "${objectType}"`);
-        console.log(`Текущее количество элементов в кэше "${objectType}": ${cache.size}`);
-        return Object.fromEntries(cache);
     }
 
+    getCacheByType(objectType) {
+        if (objectType === 'beatmapset') {
+            return this.beatmapsetsCache;
+        } else if (objectType === 'beatmap') {
+            return this.beatmapsCache;
+        } else {
+            throw new Error('Неверный тип объекта для кеша доступны: \'beatmapset\', \'beatmap\'');
+        }
+    }
 
-    getBeatmapsetsCacheObject() {
-        return Object.fromEntries(this.beatmapsetsCache);
+    getObjectCacheObject(objectType) {
+        return Object.fromEntries(this.getCacheByType(objectType));
     }
 }
 

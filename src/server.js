@@ -7,7 +7,14 @@ const OsuApi = require(path.resolve(__dirname, './services/OsuApiHelper'));
 const { commandsRunning } = require('./commands/ServerRunningCommandsInterface');
 
 app.use(express.json({ limit: '1mb' }));
-app.use(cors());
+
+const corsOptions = {
+    origin: 'https://osu.ppy.sh',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type'],
+};
+
+app.use(cors(corsOptions));
 
 app.get('/', async (req, res) => {
     res.send('Hello World!');
@@ -57,15 +64,25 @@ app.listen(port, async () => {
 });
 
 
+const fileCacheCommands = {
+    "file-size-bs": () => console.log('Размер долгого кеша (beatmapset):', OsuApi.getCacheSize('beatmapset', 'file')),
+    "file-cached-bs": (id) => console.log('Карта из долгого кеша (ID:', id, '):', OsuApi.getBeatmapsetByIdCacheFile(id)),
+};
+
+const ramCacheCommands = {
+    "ram-size-bs": () => console.log('Размер кеша оперативной памяти (beatmapset):', OsuApi.getCacheSize('beatmapset', 'ram')),
+    "ram-size-bm": () => console.log('Размер кеша оперативной памяти (beatmap):', OsuApi.getCacheSize('beatmap', 'ram')),
+
+    "ram-all-bs": () => console.log('Весь кеш оперативной памяти (beatmapset):', OsuApi.getEntireBeatmapsetCache()),
+    "ram-all-bm": () => console.log('Весь кеш оперативной памяти (beatmaps):', OsuApi.getEntireBeatmapsCache()),
+
+    "ram-cached-bs": (id, raw) => console.log('Карта из кеша оперативной памяти (ID:', id, '):', OsuApi.getBeatmapsetByIdCache(id, raw)),
+    "ram-cached-bm": (id, raw) => console.log('Мапсет из кеша оперативной памяти (ID:', id, '):', OsuApi.getBeatmapByIdCache(id, raw)),
+};
+
+// Вызов команд
 commandsRunning({
-    "file-cache-size-bs": () => console.log('Размер долгого кеша:', OsuApi.getCacheSize('file')),
-    "ram-cache-size-bs": () => console.log('Размер кеша оперативной памяти:', OsuApi.getCacheSize('ram')),
-
-    "entire-ram-cache-bs": () => console.log('Кеш оперативной памяти:', OsuApi.getEntireBeatmapsetCache()),
-    "entire-ram-cache-bm": () => console.log('Кеш оперативной памяти:', OsuApi.getEntireBeatmapsCache()),
-
-    "file-cached-bs": (id) => console.log('Карта из долгого кеша:', OsuApi.getBeatmapsetByIdCache(id, 'file')),
-
-    "ram-cached-bs": (id, raw) => console.log('Карта из кеша оперативной памяти:', OsuApi.getBeatmapsetByIdCache(id, raw)),
-    "ram-cached-bm": (id, raw) => console.log('Карта из кеша оперативной памяти:', OsuApi.getBeatmapByIdCache(id, raw)),
+    ...fileCacheCommands,
+    ...ramCacheCommands
 });
+

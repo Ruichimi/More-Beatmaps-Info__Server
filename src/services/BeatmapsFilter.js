@@ -35,6 +35,69 @@ class BeatmapsFilter {
         }
     }
 
+    minimizeBeatmapset(beatmapsetData) {
+        return this.processMinify(beatmapsetData, this.beatmapsetMinifizeKeysList);
+    }
+
+    reMinimizeBeatmapset(minimizedBeatmapsetData) {
+        return this.processMinify(minimizedBeatmapsetData, this.beatmapsetMinifizeKeysList, true);
+    }
+
+    minimizeBeatmap(beatmapData) {
+        return this.processMinify(beatmapData, this.beatmapMinifizeKeysList);
+    }
+
+    reMinimizeBeatmap(minimizedBeatmapData) {
+        return this.processMinify(minimizedBeatmapData, this.beatmapMinifizeKeysList, true);
+    }
+
+    processMinify(beatmapsetObject, objectListKeys, isMinimised = false) {
+        let subObject = null;
+
+        //Минимизируем первый верхний слой объекта
+        for (let key in beatmapsetObject) {
+            if (key !== 'beatmaps' && key !== 'difficulty') {
+                const targetKey = isMinimised
+                    ? Object.keys(objectListKeys).find(k => objectListKeys[k] === key)
+                    : objectListKeys[key];
+
+                if (targetKey && targetKey !== key) {
+                    beatmapsetObject[targetKey] = beatmapsetObject[key];
+                    delete beatmapsetObject[key];
+                }
+            } else {
+                subObject = key;
+            }
+        }
+
+        //Сравниваем ключи в объекте со списком и заменяем их
+        const filterFunk = (bmObject) => {
+            for (let key in bmObject) {
+                const targetKey = isMinimised
+                    ? Object.keys(objectListKeys[subObject])
+                        .find(k => objectListKeys[subObject][k] === key)
+                    : objectListKeys[subObject][key];
+
+                if (targetKey && targetKey !== key) {
+                    bmObject[targetKey] = bmObject[key];
+                    delete bmObject[key];
+                }
+            }
+        };
+
+        //Минимизируем вложенные объекты beatmaps или difficulty
+        if (beatmapsetObject[subObject]) {
+            if (subObject === 'beatmaps') {
+                beatmapsetObject[subObject].forEach((bmObject) => {
+                    filterFunk(bmObject);
+                });
+            } else if(subObject === 'difficulty') {
+                filterFunk(beatmapsetObject[subObject]);
+            }
+        }
+        return beatmapsetObject;
+    }
+
     filterBeatmapset(rawObject) {
         const allowedFields = [
             'id', 'beatmaps', 'status', 'ranked_date', 'submitted_date', 'bpm', 'title', 'creator',
@@ -72,65 +135,18 @@ class BeatmapsFilter {
         return beatmapsetData;
     }
 
-    minimizeBeatmapset(beatmapsetData) {
-        return this.processMinify(beatmapsetData, this.beatmapsetMinifizeKeysList);
-    }
-
-    reMinimizeBeatmapset(minimizedBeatmapsetData) {
-        return this.processMinify(minimizedBeatmapsetData, this.beatmapsetMinifizeKeysList, true);
-    }
-
-    minimizeBeatmap(beatmapData) {
-        return this.processMinify(beatmapData, this.beatmapMinifizeKeysList);
-    }
-
-    reMinimizeBeatmap(minimizedBeatmapData) {
-        return this.processMinify(minimizedBeatmapData, this.beatmapMinifizeKeysList, true);
-    }
-
-    processMinify(beatmapsetObject, objectListKeys, isMinimised = false) {
-        let subObject = null;
-        for (let key in beatmapsetObject) {
-            if (key !== 'beatmaps' && key !== 'difficulty') {
-                const targetKey = isMinimised
-                    ? Object.keys(objectListKeys).find(k => objectListKeys[k] === key)
-                    : objectListKeys[key];
-
-                if (targetKey && targetKey !== key) {
-                    beatmapsetObject[targetKey] = beatmapsetObject[key];
-                    delete beatmapsetObject[key];
-                }
-            } else {
-                subObject = key;
-            }
-        }
-
-        const filterFunk = (bmObject) => {
-            for (let key in bmObject) {
-                const targetKey = isMinimised
-                    ? Object.keys(objectListKeys[subObject])
-                        .find(k => objectListKeys[subObject][k] === key)
-                    : objectListKeys[subObject][key];
-
-                if (targetKey && targetKey !== key) {
-                    bmObject[targetKey] = bmObject[key];
-                    delete bmObject[key];
-                }
-            }
+    filterCalculatedBeatmapData(fullCalcObject) {
+        return {
+            difficulty: {
+                aim: fullCalcObject.difficulty?.aim,
+                speed: fullCalcObject.difficulty?.speed,
+                nCircles: fullCalcObject.difficulty?.nCircles,
+                nSliders: fullCalcObject.difficulty?.nSliders,
+                speedNoteCount: fullCalcObject.difficulty?.speedNoteCount,
+                flashlight: fullCalcObject.difficulty?.flashlight,
+            },
+            pp: fullCalcObject.pp,
         };
-
-        if (beatmapsetObject[subObject]) {
-            if (subObject === 'beatmaps') {
-                //console.log('Фильтруем под-объект как массив');
-                beatmapsetObject[subObject].forEach((bmObject) => {
-                    filterFunk(bmObject);
-                });
-            } else if(subObject === 'difficulty') {
-                //console.log('Фильтруем под-объект как объект');
-                filterFunk(beatmapsetObject[subObject]);
-            }
-        }
-        return beatmapsetObject;
     }
 
     filterBeatmap(beatmap) {

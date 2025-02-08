@@ -6,13 +6,74 @@ class FileCacher {
         this.beatmapsCacheFilePath = './beatmapsCache.json';
     }
 
+    getEntireBeatmapsetsCache(objectType) {
+        try {
+            const path = this.getCachePath(objectType);
+            if (!fs.existsSync(path)) {
+                throw new Error(`Cache file not found: ${path}`);
+            }
+
+            const data = fs.readFileSync(path, 'utf-8') || '{}';
+            const parsedData = JSON.parse(data)
+
+            if (typeof parsedData !== 'object' || parsedData === null) {
+                throw new Error(`Failed to parse data from ${path}, parsed data: \n
+                ${JSON.stringify(parsedData, null, 2)}`);
+            }
+            return parsedData;
+        } catch (error) {
+            throw new Error(`Не удалось получить данные мапсета из файла кэша: ${error.message}`)
+        }
+    }
+
+    writeToFile(data, objectType) {
+        const path = this.getCachePath(objectType);
+        try {
+            fs.writeFileSync(path, JSON.stringify(data, null, 2), 'utf8');
+        } catch (err) {
+            throw new Error(`Failed to write data to ${path}`);
+        }
+    }
+
+    async appendToFile(object, objectType) {
+        try {
+            let currentData;
+            const fileData = this.getFileData(objectType);
+            if (!fileData) {
+                currentData = {}
+            } else {
+                currentData = JSON.parse(fileData);
+            }
+
+            currentData = {...currentData, ...object};
+            this.writeToFile(currentData, objectType);
+        } catch (error) {
+            throw new Error(`Failed to append ${objectType} data to file ${error.message}`);
+        }
+    }
+
+    getFileData(objectType) {
+        try {
+            return fs.readFileSync(this.getCachePath(objectType), 'utf8');
+        } catch (err) {
+            console.log(`Error with getting file data \n ${err}`);
+            return null;
+        }
+    }
+
+    getCachePath(objectType) {
+        if (objectType === 'beatmapset') return this.beatmapsetsCacheFilePath;
+        if (objectType === 'beatmap') return this.beatmapsCacheFilePath;
+        throw new Error(`File cacher error: unknown object type \'${objectType}\'`);
+    }
+
     /*
-     * This function retrieves an object from the cache stored in a file.
-     * It loads the entire file into memory (RAM) and then tries to find and return the object by the given key.
-     * If the cache file doesn't exist or the object with the specified key is not found, an error message is logged.
-     * Important: Since the data is loaded into RAM, using this function may lead to memory overload when dealing with large amounts of data.
-     * This function is primarily intended for debugging purposes.
-     */
+    * This function retrieves an object from the cache stored in a file.
+    * It loads the entire file into memory (RAM) and then tries to find and return the object by the given key.
+    * If the cache file doesn't exist or the object with the specified key is not found, an error message is logged.
+    * Important: Since the data is loaded into RAM, using this function may lead to memory overload when dealing with large amounts of data.
+    * This function is primarily intended for debugging purposes.
+    */
     getBeatmapsetFromCacheByKey(key) {
         try {
             if (!fs.existsSync(this.beatmapsetsCacheFilePath)) {
@@ -30,76 +91,8 @@ class FileCacher {
                 return null;
             }
         } catch (error) {
-            console.error(`Ошибка при получении объекта из кэша: ${error.message}`);
-            return null;
+            throw new Error(`Failed to get beatmapset from file cache ${error.message}`);
         }
-    }
-
-    getEntireBeatmapsetsCache(objectType) {
-        let path;
-        if (objectType === 'beatmapset') {
-            path = this.beatmapsetsCacheFilePath;
-        } else if (objectType === 'beatmap') {
-            path = this.beatmapsCacheFilePath;
-        }
-        try {
-            if (!fs.existsSync(path)) {
-                console.log('Файл кэша не найден.');
-                return;
-            }
-            const data = fs.readFileSync(path, 'utf-8');
-            const parsedData = JSON.parse(data);
-
-            if (typeof parsedData !== 'object' || parsedData === null) {
-                console.log('Файл кэша содержит некорректные данные.');
-                return;
-            }
-            return parsedData;
-        } catch (error) {
-            throw new Error(`Не удалось получить данные мапсета из файла кэша: ${error.message}`)
-        }
-    }
-
-    writeToFile(data, objectType) {
-        let path = null;
-        if (objectType === 'beatmapset') {
-            path = this.beatmapsetsCacheFilePath;
-        } else if (objectType === 'beatmap') {
-            path = this.beatmapsCacheFilePath;
-        }
-        try {
-            fs.writeFileSync(path, JSON.stringify(data, null, 2), 'utf8');
-        } catch (err) {
-            console.error('Ошибка записи файла:', err);
-        }
-    }
-
-    async appendToFile(object, objectId, objectType) {
-        const beatmapDataWithKey = { [objectId]: object };
-        let currentData;
-        let fileData = null;
-        try {
-            if (objectType === 'beatmapset') {
-                fileData = fs.readFileSync(this.beatmapsetsCacheFilePath, 'utf8');
-            } else if (objectType === 'beatmap') {
-                try {
-                    fileData = fs.readFileSync(this.beatmapsCacheFilePath, 'utf8');
-                } catch (err) {
-                    fileData = null;
-                }
-            }
-        } catch (err) {
-            console.log('Файл пуст или ошибка чтения:', err);
-        }
-        if (!fileData) {
-            currentData = {}
-        } else {
-            currentData = JSON.parse(fileData);
-        }
-
-        currentData = { ...currentData, ...beatmapDataWithKey };
-
-        this.writeToFile(currentData, objectType);
     }
 }
 

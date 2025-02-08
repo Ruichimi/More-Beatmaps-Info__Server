@@ -3,6 +3,7 @@ const axios = require(path.resolve(__dirname, "./axios"));
 const env = require(path.resolve(process.cwd(), './env.json'));
 const rosu = require("rosu-pp-js");
 const CacheManager = require("./CacheManager");
+const BeatmapsFilter = require('./BeatmapsFilter');
 
 class OsuApiHelper extends CacheManager {
     constructor() {
@@ -26,19 +27,23 @@ class OsuApiHelper extends CacheManager {
     }
 
     getMapsetData = async (mapsetId) => {
-        const cachedBeatmapset = this.getObjectFromCache(mapsetId, 'beatmapset');
-        if (cachedBeatmapset) return cachedBeatmapset;
+        try {
+            const cachedBeatmapset = this.getObjectFromCache(mapsetId, 'beatmapset');
+            if (cachedBeatmapset) return cachedBeatmapset;
 
-        const response = await axios.get(this.baseUrl + `beatmapsets/${mapsetId}`, {
-            headers: {
-                'Authorization': `Bearer ${this.accessToken}`,
-                'Content-Type': 'application/json',
-            },
-        });
+            const response = await axios.get(this.baseUrl + `beatmapsets/${mapsetId}`, {
+                headers: {
+                    'Authorization': `Bearer ${this.accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+            });
 
-        this.cacheBeatmapset(response.data);
-
-        return response.data;
+            this.cacheBeatmapset(response.data);
+            //console.log(`The beatmap ${mapsetId} has not found in cache`);
+            return response.data;
+        } catch(err) {
+            console.error(err);
+        }
     }
 
     getBeatmapData(beatmapId, beatmapStructure) {
@@ -47,8 +52,7 @@ class OsuApiHelper extends CacheManager {
 
         try {
             console.log("Getting pp for beatmap: ", beatmapId);
-            const calculatedBeatmapData = this.getCalculatedBeatmapData(beatmapId, beatmapStructure);
-
+            const calculatedBeatmapData = this.#getCalculatedBeatmapData(beatmapId, beatmapStructure);
             const deepClonedData = JSON.parse(JSON.stringify(calculatedBeatmapData));
 
             this.cacheBeatmap(deepClonedData);
@@ -59,25 +63,11 @@ class OsuApiHelper extends CacheManager {
         }
     }
 
-    getCalculatedBeatmapData(beatmapId, beatmapStructure) {
+    #getCalculatedBeatmapData(beatmapId, beatmapStructure) {
         const map = new rosu.Beatmap(beatmapStructure);
         const fullCalcBeatmapData = new rosu.Performance({mods: "CL"}).calculate(map);
-        let filteredFullBeatmapData =  this.filterCalculatedBeatmapData(fullCalcBeatmapData);
+        let filteredFullBeatmapData =  BeatmapsFilter.filterCalculatedBeatmapData(fullCalcBeatmapData);
         return {...filteredFullBeatmapData, id: Number(beatmapId)};
-    }
-
-    filterCalculatedBeatmapData(fullCalcObject) {
-        return {
-            difficulty: {
-                aim: fullCalcObject.difficulty?.aim,
-                speed: fullCalcObject.difficulty?.speed,
-                nCircles: fullCalcObject.difficulty?.nCircles,
-                nSliders: fullCalcObject.difficulty?.nSliders,
-                speedNoteCount: fullCalcObject.difficulty?.speedNoteCount,
-                flashlight: fullCalcObject.difficulty?.flashlight,
-            },
-            pp: fullCalcObject.pp,
-        };
     }
 }
 
