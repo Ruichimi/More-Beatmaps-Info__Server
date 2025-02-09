@@ -33,6 +33,11 @@ class BeatmapsFilter {
             "id": "i",
             "date": "t"
         }
+
+        this.minifizeKeysList = {
+            difficulty: 'df',
+            beatmaps: 'bm'
+        }
     }
 
     minimizeBeatmapset(beatmapsetData) {
@@ -52,50 +57,77 @@ class BeatmapsFilter {
     }
 
     processMinify(beatmapsetObject, objectListKeys, isMinimised = false) {
-        let subObject = null;
+        try {
+            //Название на которое будет переименовован ключ для вложенного объекта
+            //Устанавливается взависимости от того минифицированный объект приходит или нет
+            let renameSubObjectKey = null;
+            //Изначальное название ключа для вложенного объекта, к пример "beatmaps"
+            //Необходимо для поиска под объекта в списке ключей для переименования
+            //Устанавливается взависимости от того минифицированный объект приходит или нет
+            let fullSubObjectKey= null;
+            // Минимизируем первый верхний слой объекта
+            Object.keys(beatmapsetObject).forEach((key) => {
+                const value = beatmapsetObject[key];
 
-        //Минимизируем первый верхний слой объекта
-        for (let key in beatmapsetObject) {
-            if (key !== 'beatmaps' && key !== 'difficulty') {
-                const targetKey = isMinimised
-                    ? Object.keys(objectListKeys).find(k => objectListKeys[k] === key)
-                    : objectListKeys[key];
-
-                if (targetKey && targetKey !== key) {
-                    beatmapsetObject[targetKey] = beatmapsetObject[key];
+                // Проверяем, является ли значение вложенным объектом или массивом
+                if (typeof value === 'object' && value !== null) {
+                    if (isMinimised) {
+                        renameSubObjectKey = Object.keys(this.minifizeKeysList).find(k => this.minifizeKeysList[k] === key);
+                        fullSubObjectKey = renameSubObjectKey;
+                    } else {
+                        fullSubObjectKey = key;
+                        renameSubObjectKey = this.minifizeKeysList[key];
+                    }
+                    //console.log(renameSubObjectKey);
+                    beatmapsetObject[renameSubObjectKey] = value;
                     delete beatmapsetObject[key];
+                } else {
+                    this.#renameObjectKeyByListKeys(beatmapsetObject, key, value, objectListKeys, isMinimised);
                 }
+            });
+
+            // Минимизируем вложенные объекты beatmaps или difficulty
+            if (renameSubObjectKey) {
+                this.#renameSubObjectKeys(beatmapsetObject, renameSubObjectKey, fullSubObjectKey, objectListKeys, isMinimised);
             } else {
-                subObject = key;
+                throw new Error(`Undefined key to rename sub object`);
             }
+
+            return beatmapsetObject;
+        } catch(err) {
+            const actionText = isMinimised ? 'reMinify' : 'Minify';
+            throw new Error(`Failed to ${actionText} object ${err.message}`);
         }
+    }
 
-        //Сравниваем ключи в объекте со списком и заменяем их
-        const filterFunk = (bmObject) => {
-            for (let key in bmObject) {
-                const targetKey = isMinimised
-                    ? Object.keys(objectListKeys[subObject])
-                        .find(k => objectListKeys[subObject][k] === key)
-                    : objectListKeys[subObject][key];
+    #renameKeys(object, objectListKeys, isMinimised) {
+        for (let [key, value] of Object.entries(object)) {
+            this.#renameObjectKeyByListKeys(object, key, value, objectListKeys, isMinimised)
+        }
+    }
 
-                if (targetKey && targetKey !== key) {
-                    bmObject[targetKey] = bmObject[key];
-                    delete bmObject[key];
+    #renameObjectKeyByListKeys(object, key, value, objectListKeys, isMinimised) {
+        const targetKey = isMinimised
+            ? Object.keys(objectListKeys).find(k => objectListKeys[k] === key)
+            : objectListKeys[key];
+        //console.log(targetKey);
+        if (targetKey && targetKey !== key) {
+            object[targetKey] = value;
+            delete object[key];
+        }
+    }
+
+    #renameSubObjectKeys(beatmapsetObject, renameSubObjectKey, fullSubObjectKey, objectListKeys, isMinimised) {
+        if (Array.isArray(beatmapsetObject[renameSubObjectKey])) {
+            beatmapsetObject[renameSubObjectKey].forEach(item => {
+                if (Array.isArray(item)) {
+                    throw new Error(`Undefined sub object ${renameSubObjectKey}`);
                 }
-            }
-        };
-
-        //Минимизируем вложенные объекты beatmaps или difficulty
-        if (beatmapsetObject[subObject]) {
-            if (subObject === 'beatmaps') {
-                beatmapsetObject[subObject].forEach((bmObject) => {
-                    filterFunk(bmObject);
-                });
-            } else if(subObject === 'difficulty') {
-                filterFunk(beatmapsetObject[subObject]);
-            }
+                this.#renameKeys(item, objectListKeys[fullSubObjectKey], isMinimised);
+            });
+        } else if (beatmapsetObject[renameSubObjectKey]) {
+            this.#renameKeys(beatmapsetObject[renameSubObjectKey], objectListKeys[fullSubObjectKey], isMinimised);
         }
-        return beatmapsetObject;
     }
 
     filterBeatmapset(rawObject) {
