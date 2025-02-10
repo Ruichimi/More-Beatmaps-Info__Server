@@ -1,6 +1,6 @@
+require('dotenv').config();
 const path = require("path");
 const axios = require(path.resolve(__dirname, "./axios"));
-const env = require(path.resolve(process.cwd(), './env.json'));
 const rosu = require("rosu-pp-js");
 const CacheManager = require("./cache/CacheManager");
 const BeatmapsFilter = require('./BeatmapsFilter');
@@ -9,8 +9,8 @@ class OsuApiHelper extends CacheManager {
     constructor() {
         super();
         this.baseUrl = 'https://osu.ppy.sh/api/v2/';
-        this.clientId = env.osuApi.clientId;
-        this.clientSecret = env.osuApi.clientSecret;
+        this.clientId = process.env.clientId;
+        this.clientSecret = process.env.clientSecret;
         this.accessToken = null;
     }
 

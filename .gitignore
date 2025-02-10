@@ -1,5 +1,5 @@
 .idea
+.env
 node_modules
-env.json
 beatmapsCache.json
 beatmapsetsCache.json
