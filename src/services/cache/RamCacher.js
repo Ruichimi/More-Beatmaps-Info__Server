@@ -1,3 +1,4 @@
+const BeatmapsMinifier = require('../BeatmapsMinifier');
 const BeatmapsFilter = require('../BeatmapsFilter');
 
 class RamCacher {
@@ -19,9 +20,9 @@ class RamCacher {
             let beatmapsetData = null;
 
             if (objectType === 'beatmap') {
-                beatmapsetData = BeatmapsFilter.reMinimizeBeatmap(deepClonedData);
+                beatmapsetData = BeatmapsMinifier.reMinimizeBeatmap(deepClonedData);
             } else if (objectType === 'beatmapset') {
-                beatmapsetData = BeatmapsFilter.reMinimizeBeatmapset(deepClonedData);
+                beatmapsetData = BeatmapsMinifier.reMinimizeBeatmapset(deepClonedData);
             }
 
             return {...beatmapsetData, id: Number(objectId)};
@@ -40,10 +41,10 @@ class RamCacher {
 
             let cache = this.getCacheByType(objectType);
             if (objectType === 'beatmapset') {
-                object = BeatmapsFilter.minimizeBeatmapset(object);
+                object = BeatmapsMinifier.minimizeBeatmapset(object);
                 object = BeatmapsFilter.removeUnusedFieldsFromBeatmapset(object);
             } else if (objectType === 'beatmap') {
-                object = BeatmapsFilter.minimizeBeatmap(object);
+                object = BeatmapsMinifier.minimizeBeatmap(object);
             }
 
             if (cache.size >= cacheLimit) {

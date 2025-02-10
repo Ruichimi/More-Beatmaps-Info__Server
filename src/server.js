@@ -6,6 +6,10 @@ const path = require('path');
 const OsuApi = require(path.resolve(__dirname, './services/OsuApiHelper'));
 const { commandsRunning } = require('./commands/ServerRunningCommandsInterface');
 
+//TODO: Сделать команды для очистки кеша
+//TODO: (Опционально) Сохранять очищенный файловый кеш куда нибудь
+//TODO: Если кеш планируется очень большой то сделать очистку по командам вместо автоматической
+
 app.use(express.json({ limit: '1mb' }));
 
 const corsOptions = {
