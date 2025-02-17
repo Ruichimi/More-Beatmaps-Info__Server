@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const app = express();
 const port = 3000;
@@ -82,6 +83,9 @@ const ramCacheCommands = {
 
     "ram-cached-bs": (id, raw) => console.log('Карта из кеша оперативной памяти (ID:', id, '):', OsuApi.getBeatmapsetByIdCache(id, raw)),
     "ram-cached-bm": (id, raw) => console.log('Мапсет из кеша оперативной памяти (ID:', id, '):', OsuApi.getBeatmapByIdCache(id, raw)),
+
+    "ram-clean-bs": (amount) => console.log(OsuApi.getBeatmapByIdCache(amount)),
+    "ram-clean-bm": (amount) => console.log(OsuApi.getBeatmapByIdCache(amount)),
 };
 
 // Вызов команд

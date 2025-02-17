@@ -60,9 +60,12 @@ class BeatmapsMinifier {
         try {
             let newSubObjectKey = null; // The key name to which the nested object's key will be renamed
             let originalSubObjectKey= null; // The original key name for the nested object, e.g. "beatmaps"
+            let val = null;
             // Minify the first top-level object
             Object.keys(beatmapsetObject).forEach((key) => {
+                //console.log(key);
                 const value = beatmapsetObject[key];
+                val = value;
                 // Check if the value is a nested object or array
                 if (!(typeof value === 'object' && value !== null)) {
                     this.#renameObjectKeyByListKeys(beatmapsetObject, key, value, objectListKeys, isMinimised);
@@ -88,6 +91,8 @@ class BeatmapsMinifier {
             if (newSubObjectKey) {
                 this.#renameSubObjectKeys(beatmapsetObject, newSubObjectKey, originalSubObjectKey, objectListKeys, isMinimised);
             } else {
+                // console.log(newSubObjectKey);
+                // console.log(val);
                 throw new Error(`Undefined key to rename sub object`);
             }
 
