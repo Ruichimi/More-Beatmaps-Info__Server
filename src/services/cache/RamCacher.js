@@ -32,7 +32,7 @@ class RamCacher {
 
     }
 
-    setObject(object, objectId, cacheLimit, objectType) {
+    setObject(object, objectId, objectType) {
         try {
             if (!object || typeof object !== 'object') {
                 console.log('Неверные данные для загрузки.');
@@ -47,10 +47,6 @@ class RamCacher {
                 object = BeatmapsMinifier.minimizeBeatmap(object);
             }
 
-            if (cache.size >= cacheLimit) {
-                console.log('Превышен лимит кэша, загрузка остановлена.');
-                return cache.size;
-            }
             cache.set(objectId, object);
             return cache.size;
         } catch (err) {

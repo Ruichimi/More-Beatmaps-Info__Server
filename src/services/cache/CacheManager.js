@@ -5,9 +5,13 @@ const BeatmapsMinifier = require('../BeatmapsMinifier');
 
 class CacheManager {
     constructor() {
+        // noinspection JSUnusedGlobalSymbols
         this.beatmapsetsCacheLimit = 30;
+        // noinspection JSUnusedGlobalSymbols
         this.beatmapsetsCacheCleanItems = 20;
+        // noinspection JSUnusedGlobalSymbols
         this.beatmapsCacheLimit = 3;
+        // noinspection JSUnusedGlobalSymbols
         this.beatmapsCacheCleanItems = 1;
     }
 
@@ -21,33 +25,56 @@ class CacheManager {
 
     cacheBeatmapset(mapsetData) {
         let filteredMapset = BeatmapsFilter.filterBeatmapset(mapsetData);
-        this.cacheObject(filteredMapset, 'beatmapset', this.beatmapsetsCacheLimit, this.beatmapsetsCacheCleanItems);
+        this.#cacheObject(filteredMapset, 'beatmapset');
     }
 
     cacheBeatmap(beatmapData) {
         let filteredBeatmapData = BeatmapsFilter.filterBeatmap(beatmapData);
-        this.cacheObject(filteredBeatmapData, 'beatmap', this.beatmapsCacheLimit, this.beatmapsCacheCleanItems);
+        this.#cacheObject(filteredBeatmapData, 'beatmap');
     }
 
-    cacheObject(object, objectType, cacheLimit, cleanItems) {
+    loadObjectItemsToRamFromFile(dataType) {
         try {
-            // if (RamCacher[`${objectType}sCache`].size >= cacheLimit) {
-            //     const clearedRamData = RamCacher.clearOldObjectsByDate(objectType, cleanItems);
-            //     FileCacher.writeToFile(clearedRamData, objectType);
-            // }
-            this.cleanRamCacheIfNeeded(objectType);
+            let cachedItemsCount = 0;
+            const mapsetsFileCached = FileCacher.getEntireBeatmapsetsCache(dataType);
+
+            for (const [key, mapset] of Object.entries(mapsetsFileCached)) {
+                this.#setObjectRam(mapset, key, dataType);
+                cachedItemsCount++;
+            }
+            console.log(`${cachedItemsCount} ${dataType}s загруженны в оперативную память`);
+        } catch(err) {
+            throw new Error(`Failed to load ${dataType} to RAM from file \n${err.message}`);
+        }
+    }
+
+    #cacheObject(object, objectType) {
+        try {
+            this.#cleanRamCacheIfNeeded(objectType);
             const objectId = String(object.id);
             object.date = Date.now();
             delete object.id;
 
             FileCacher.appendToFile({[objectId]: object}, objectType);
-            RamCacher.setObject(object, objectId, cacheLimit, objectType);
+            this.#setObjectRam(object, objectId, objectType);
         } catch(err) {
             throw new Error(`Failed to cache ${objectType} \n${err.message}`);
         }
     }
 
-    cleanRamCacheIfNeeded(objectType, amount = null) {
+    #setObjectRam(object, objectId, objectType) {
+        const cache = RamCacher.getCacheByType(objectType);
+        const cacheLimit = this[`${objectType}sCacheLimit`];
+        if (cache.size >= cacheLimit) {
+            console.log('Превышен лимит кэша, загрузка остановлена.');
+            return cache.size;
+        }
+
+        RamCacher.setObject(object, objectId, objectType)
+    }
+
+
+    #cleanRamCacheIfNeeded(objectType, amount = null) {
         const cache = RamCacher[`${objectType}sCache`];
         const limit = this[`${objectType}sCacheLimit`];
         const cleanItems = amount ?? this[`${objectType}sCacheCleanItems`];
@@ -75,32 +102,9 @@ class CacheManager {
         }
     }
 
-
-    loadObjectItemsToRamFromFile(dataType) {
-        try {
-            let cachedItemsCount = 0;
-            const mapsetsFileCached = FileCacher.getEntireBeatmapsetsCache(dataType);
-
-            for (const [key, mapset] of Object.entries(mapsetsFileCached)) {
-                RamCacher.setObject(mapset, key, this.beatmapsetsCacheLimit, dataType);
-                cachedItemsCount++;
-            }
-            console.log(`${cachedItemsCount} ${dataType}s загруженны в оперативную память`);
-        } catch(err) {
-            throw new Error(`Failed to load ${dataType} to RAM from file \n${err.message}`);
-        }
-    }
-
-    getObjectSize(parsedData) {
-        if (typeof parsedData !== 'object' || parsedData === null) {
-            console.log('Файл кэша содержит некорректные данные.');
-            return {sizeInBytes: 0, numberOfEntries: 0};
-        }
-        const sizeInBytes = new TextEncoder().encode(JSON.stringify(parsedData)).length;
-        const numberOfEntries = Object.keys(parsedData).length;
-
-        return {sizeInBytes, numberOfEntries};
-    }
+   /*
+    * Next methods currently using only for commands for testing the cache
+    */
 
     getCacheSize(objectType, cacheType) {
         try {
@@ -118,10 +122,21 @@ class CacheManager {
                 parsedData = RamCacher.getObjectCacheObject('beatmap');
             }
 
-            return this.getObjectSize(parsedData);
+            return this.#getObjectSize(parsedData);
         } catch(err) {
             throw new Error(`Failed to get ${objectType}s cache size from ${cacheType} \n${err.message}`);
         }
+    }
+
+    #getObjectSize(parsedData) {
+        if (typeof parsedData !== 'object' || parsedData === null) {
+            console.log('Файл кэша содержит некорректные данные.');
+            return {sizeInBytes: 0, numberOfEntries: 0};
+        }
+        const sizeInBytes = new TextEncoder().encode(JSON.stringify(parsedData)).length;
+        const numberOfEntries = Object.keys(parsedData).length;
+
+        return {sizeInBytes, numberOfEntries};
     }
 
     getBeatmapsetByIdCache(id, raw = false) {
