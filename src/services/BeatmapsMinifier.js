@@ -31,7 +31,7 @@ class BeatmapsMinifier {
             },
             "pp": "p",
             "id": "i",
-            "date": "t"
+            "date": "d"
         }
 
         this.minifizeKeysList = {
@@ -61,8 +61,10 @@ class BeatmapsMinifier {
             let newSubObjectKey = null; // The key name to which the nested object's key will be renamed
             let originalSubObjectKey= null; // The original key name for the nested object, e.g. "beatmaps"
             let val = null;
+            let ke = null;
             // Minify the first top-level object
             Object.keys(beatmapsetObject).forEach((key) => {
+                ke = key;
                 //console.log(key);
                 const value = beatmapsetObject[key];
                 val = value;
@@ -89,10 +91,10 @@ class BeatmapsMinifier {
 
             // Minify nested objects like beatmaps or difficulty, passing the obtained keys
             if (newSubObjectKey) {
-                this.#renameSubObjectKeys(beatmapsetObject, newSubObjectKey, originalSubObjectKey, objectListKeys, isMinimised);
+                // if (Object.keys(beatmapsetObject[newSubObjectKey]).length > 0) {
+                    this.#renameSubObjectKeys(beatmapsetObject, newSubObjectKey, originalSubObjectKey, objectListKeys, isMinimised);
+                // }
             } else {
-                // console.log(newSubObjectKey);
-                // console.log(val);
                 throw new Error(`Undefined key to rename sub object`);
             }
 
@@ -104,13 +106,18 @@ class BeatmapsMinifier {
     }
 
     #renameSubObjectKeys(beatmapsetObject, newSubObjectKey, originalSubObjectKey, objectListKeys, isMinimised) {
-        if (Array.isArray(beatmapsetObject[newSubObjectKey])) {
-            beatmapsetObject[newSubObjectKey].forEach(item => {
-                if (Array.isArray(item)) {
-                    throw new Error(`Undefined sub object ${newSubObjectKey}`);
-                }
-                this.#renameKeys(item, objectListKeys[originalSubObjectKey], isMinimised);
-            });
+        const subObject = beatmapsetObject[newSubObjectKey];
+        if (Array.isArray(subObject)) {
+            if (Object.keys(subObject).length > 0) {
+                beatmapsetObject[newSubObjectKey].forEach(item => {
+                    if (Array.isArray(item)) {
+                        throw new Error(`Undefined sub object ${newSubObjectKey}`);
+                    }
+                    this.#renameKeys(item, objectListKeys[originalSubObjectKey], isMinimised);
+                });
+            } else {
+                console.log('sub object is empty');
+            }
         } else if (beatmapsetObject[newSubObjectKey]) {
             this.#renameKeys(beatmapsetObject[newSubObjectKey], objectListKeys[originalSubObjectKey], isMinimised);
         }

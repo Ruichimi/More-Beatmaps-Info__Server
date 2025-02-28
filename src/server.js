@@ -1,22 +1,23 @@
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
+const authenticateToken = require('./middlewares/jwt');
+const RequestSizeLimit = require('./middlewares/RequestSizeLimit');
+const {v4: uuidv4} = require('uuid');
 const express = require('express');
 const app = express();
 const port = 3000;
 const cors = require('cors');
 const path = require('path');
 const OsuApi = require(path.resolve(__dirname, './services/OsuApiHelper'));
-const { commandsRunning } = require('./commands/ServerRunningCommandsInterface');
+const {commandsRunning} = require('./commands/ServerRunningCommandsInterface');
 
-//TODO: Сделать команды для очистки кеша
-//TODO: (Опционально) Сохранять очищенный файловый кеш куда нибудь
-//TODO: Если кеш планируется очень большой то сделать очистку по командам вместо автоматической
+app.use(express.json({ limit: '320kb' }));
 
-app.use(express.json({ limit: '1mb' }));
 
 const corsOptions = {
-    origin: 'https://osu.ppy.sh',
+    origin: '*',
     methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type'],
+    allowedHeaders: "Authorization, Content-Type, x-client-id"
 };
 
 app.use(cors(corsOptions));
@@ -25,36 +26,49 @@ app.get('/', async (req, res) => {
     res.send('Hello World!');
 });
 
-app.get('/api/MapsetData/:id', async (req, res) => {
+app.post('/api/token', (req, res) => {
+    console.log('Запрос на новый токен');
+    const user = {id: uuidv4()};
+
+    const token = jwt.sign(user, process.env.APP_KEY, {expiresIn: '100h'});
+
+    res.json({token});
+});
+
+app.get('/api/MapsetData/:id', authenticateToken, RequestSizeLimit, async (req, res) => {
     const mapsetId = req.params.id;
     try {
         const data = await OsuApi.getMapsetData(mapsetId);
         res.json(data);
     } catch (error) {
         console.error("Ошибка получения данных:", error);
-        res.status(500).json({ error: "Ошибка получения данных" });
+        res.status(500).json({error: "Ошибка получения данных"});
     }
 });
 
-app.get('/api/BeatmapData/:id', async (req, res) => {
+app.post('/api/BeatmapPP/:id', express.json(), authenticateToken, RequestSizeLimit, async (req, res) => {
+    const {id: beatmapId} = req.params;
+    const {beatmap} = req.body;
+    try {
+        const calculatedBeatmapData = await OsuApi.getBeatmapData(beatmapId, beatmap);
+        res.json(calculatedBeatmapData);
+    } catch (error) {
+        res.status(500).json({error: "Ошибка получения данных"});
+    }
+});
+
+/**
+ * Currently unused route, because of top one
+ */
+
+app.get('/api/BeatmapData/:id', authenticateToken, RequestSizeLimit, async (req, res) => {
     const beatmapId = req.params.id;
     try {
         const data = await OsuApi.getBeatmapData(beatmapId);
         res.json(data);
     } catch (error) {
         console.error("Ошибка получения данных:", error);
-        res.status(500).json({ error: "Ошибка получения данных" });
-    }
-});
-
-app.post('/api/BeatmapPP/:id', express.json(), async (req, res) => {
-    const { id: beatmapId } = req.params;
-    const { beatmap } = req.body;
-    try {
-        const calculatedBeatmapData = await OsuApi.getBeatmapData(beatmapId, beatmap);
-        res.json(calculatedBeatmapData);
-    } catch (error) {
-        res.status(500).json({ error: "Ошибка получения данных" });
+        res.status(500).json({error: "Ошибка получения данных"});
     }
 });
 
@@ -83,14 +97,16 @@ const ramCacheCommands = {
 
     "ram-cached-bs": (id, raw) => console.log('Карта из кеша оперативной памяти (ID:', id, '):', OsuApi.getBeatmapsetByIdCache(id, raw)),
     "ram-cached-bm": (id, raw) => console.log('Мапсет из кеша оперативной памяти (ID:', id, '):', OsuApi.getBeatmapByIdCache(id, raw)),
-
-    "ram-clean-bs": (amount) => console.log(OsuApi.getBeatmapByIdCache(amount)),
-    "ram-clean-bm": (amount) => console.log(OsuApi.getBeatmapByIdCache(amount)),
 };
 
-// Вызов команд
+const functionCommands = {
+    "clean-bs": (amount) => console.log(OsuApi.cleanRamCacheIfNeeded('beatmapset', amount)),
+    "clean-bm": (amount) => console.log(OsuApi.cleanRamCacheIfNeeded('beatmap', amount)),
+}
+
 commandsRunning({
     ...fileCacheCommands,
-    ...ramCacheCommands
+    ...ramCacheCommands,
+    ...functionCommands
 });
 

@@ -9,8 +9,8 @@ class OsuApiHelper extends CacheManager {
     constructor() {
         super();
         this.baseUrl = 'https://osu.ppy.sh/api/v2/';
-        this.clientId = process.env.clientId;
-        this.clientSecret = process.env.clientSecret;
+        this.clientId = process.env.CLIENT_ID;
+        this.clientSecret = process.env.CLIENT_SECRET;
         this.accessToken = null;
     }
 
@@ -28,7 +28,7 @@ class OsuApiHelper extends CacheManager {
 
     getMapsetData = async (mapsetId) => {
         try {
-            const cachedBeatmapset = this.getObjectFromCache(mapsetId, 'beatmapset');
+            const cachedBeatmapset = this.getObjectRam(mapsetId, 'beatmapset');
             if (cachedBeatmapset) return cachedBeatmapset;
 
             const response = await axios.get(this.baseUrl + `beatmapsets/${mapsetId}`, {
@@ -47,7 +47,7 @@ class OsuApiHelper extends CacheManager {
     }
 
     getBeatmapData(beatmapId, beatmapStructure) {
-        const cachedBeatmap = this.getObjectFromCache(beatmapId, 'beatmap');
+        const cachedBeatmap = this.getObjectRam(beatmapId, 'beatmap');
         if (cachedBeatmap) return cachedBeatmap;
 
         try {

@@ -57,10 +57,9 @@ class RamCacher {
     clearOldObjectsByDate(objectType, count) {
         try {
             const cache = this.getCacheByType(objectType);
-
             const sortedEntries = this.sortCacheByDate(cache);
             let deletedItemsCount = 0;
-            console.log(sortedEntries.length);
+
             for (let i = 0; i < count && i < sortedEntries.length; i++) {
                 const [key] = sortedEntries[i];
                 cache.delete(key);
@@ -77,8 +76,8 @@ class RamCacher {
 
     sortCacheByDate(cache) {
         return [...cache.entries()].sort((a, b) => {
-            const dateA = new Date(a[1].date);
-            const dateB = new Date(b[1].date);
+            const dateA = new Date(a[1].d); // key "d" is minified key for date
+            const dateB = new Date(b[1].d);
             return dateA - dateB;
         });
     }

@@ -15,7 +15,7 @@ class CacheManager {
         this.beatmapsCacheCleanItems = 1;
     }
 
-    getObjectFromCache(objectId, objectType) {
+    getObjectRam(objectId, objectType) {
         const cachedObject = RamCacher.getObjectById(objectId, objectType);
         if (cachedObject) {
             //console.log(`The ${objectType} ${objectId} data received from RAM cache`);
@@ -50,7 +50,7 @@ class CacheManager {
 
     #cacheObject(object, objectType) {
         try {
-            this.#cleanRamCacheIfNeeded(objectType);
+            this.cleanRamCacheIfNeeded(objectType);
             const objectId = String(object.id);
             object.date = Date.now();
             delete object.id;
@@ -73,33 +73,70 @@ class CacheManager {
         RamCacher.setObject(object, objectId, objectType)
     }
 
+    /**
+     * Cleans the cache.
+     * @returns {number} The count of items in cache after cleaning.
+     */
 
-    #cleanRamCacheIfNeeded(objectType, amount = null) {
-        const cache = RamCacher[`${objectType}sCache`];
-        const limit = this[`${objectType}sCacheLimit`];
-        const cleanItems = amount ?? this[`${objectType}sCacheCleanItems`];
+    cleanRamCacheIfNeeded(objectType, amount = null) {
+        try {
+            const cache = RamCacher[`${objectType}sCache`];
+            const limit = this[`${objectType}sCacheLimit`];
+            const cleanItems = amount ?? this[`${objectType}sCacheCleanItems`];
 
-        if (amount && cache.size < amount) {
-            throw new Error(`Failed to clean ram cache, amount smaller than items count ${cache.size}, ${amount}`);
-        }
-
-        if (amount || cache.size >= limit) {
-            const clearedRamData = RamCacher.clearOldObjectsByDate(objectType, cleanItems);
-            let reMinimizedData = null;
-            let resultObject = {};
-
-            for (let objectId in clearedRamData) {
-                let value = clearedRamData[objectId];
-                if (objectType === 'beatmapset') {
-                    reMinimizedData = BeatmapsMinifier.reMinimizeBeatmapset(value);
-                } else if (objectType === 'beatmap') {
-                    reMinimizedData = BeatmapsMinifier.reMinimizeBeatmap(value);
-                }
-                resultObject[objectId] = reMinimizedData;
+            if (amount && cache.size < amount) {
+                throw new Error(`Amount smaller than items count ${cache.size}, ${amount}`);
             }
 
-            FileCacher.writeToFile(resultObject, objectType);
+            if (amount || cache.size >= limit) {
+                const clearedRamData = RamCacher.clearOldObjectsByDate(objectType, cleanItems);
+                    // console.log('111', clearedRamData);
+
+                this.#reMinimizeObject(clearedRamData, objectType);
+                FileCacher.writeToFile(clearedRamData, objectType);
+                this.#minimizeObject(clearedRamData, objectType);
+
+                return Object.keys(clearedRamData).length;
+            } else {
+                return 0;
+            }
+        } catch(err) {
+            throw new Error(`Failed to clean ${objectType}s cache \n${err.message}`);
         }
+    }
+
+    #reMinimizeObject(object, objectType) {
+        let resultObject = {};
+        let reMinimizedData = null;
+
+        for (let objectId in object) {
+            let value = object[objectId];
+            if (objectType === 'beatmapset') {
+                reMinimizedData = BeatmapsMinifier.reMinimizeBeatmapset(value);
+            } else if (objectType === 'beatmap') {
+                reMinimizedData = BeatmapsMinifier.reMinimizeBeatmap(value);
+            }
+            resultObject[objectId] = reMinimizedData;
+        }
+
+        return resultObject;
+    }
+
+    #minimizeObject(object, objectType) {
+        let resultObject = {};
+        let reMinimizedData = null;
+
+        for (let objectId in object) {
+            let value = object[objectId];
+            if (objectType === 'beatmapset') {
+                reMinimizedData = BeatmapsMinifier.minimizeBeatmapset(value);
+            } else if (objectType === 'beatmap') {
+                reMinimizedData = BeatmapsMinifier.minimizeBeatmap(value);
+            }
+            resultObject[objectId] = reMinimizedData;
+        }
+
+        return resultObject;
     }
 
    /*
