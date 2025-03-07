@@ -2,6 +2,7 @@ require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const authenticateToken = require('./middlewares/jwt');
 const RequestSizeLimit = require('./middlewares/RequestSizeLimit');
+const { tokenLimiter, mapsetLimiter, beatmapLimiter } = require('./middlewares/rateLimiters');
 const {v4: uuidv4} = require('uuid');
 const express = require('express');
 const app = express();
@@ -17,7 +18,7 @@ app.use(express.json({ limit: '320kb' }));
 const corsOptions = {
     origin: '*',
     methods: ['GET', 'POST'],
-    allowedHeaders: "Authorization, Content-Type, x-client-id"
+    allowedHeaders: "Authorization, Content-Type, x-client-id, x-retry-request"
 };
 
 app.use(cors(corsOptions));
@@ -26,8 +27,7 @@ app.get('/', async (req, res) => {
     res.send('Hello World!');
 });
 
-app.post('/api/token', (req, res) => {
-    console.log('Запрос на новый токен');
+app.post('/api/token', tokenLimiter, (req, res) => {    console.log('Запрос на новый токен');
     const user = {id: uuidv4()};
 
     const token = jwt.sign(user, process.env.APP_KEY, {expiresIn: '100h'});
@@ -35,8 +35,9 @@ app.post('/api/token', (req, res) => {
     res.json({token});
 });
 
-app.get('/api/MapsetData/:id', authenticateToken, RequestSizeLimit, async (req, res) => {
+app.get('/api/MapsetData/:id', authenticateToken, mapsetLimiter, RequestSizeLimit, async (req, res) => {
     const mapsetId = req.params.id;
+    console.log(mapsetId);
     try {
         const data = await OsuApi.getMapsetData(mapsetId);
         res.json(data);
@@ -46,7 +47,7 @@ app.get('/api/MapsetData/:id', authenticateToken, RequestSizeLimit, async (req, 
     }
 });
 
-app.post('/api/BeatmapPP/:id', express.json(), authenticateToken, RequestSizeLimit, async (req, res) => {
+app.post('/api/BeatmapPP/:id', express.json(), authenticateToken, RequestSizeLimit, beatmapLimiter, async (req, res) => {
     const {id: beatmapId} = req.params;
     const {beatmap} = req.body;
     try {
@@ -109,4 +110,3 @@ commandsRunning({
     ...ramCacheCommands,
     ...functionCommands
 });
-
