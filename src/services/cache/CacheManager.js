@@ -6,13 +6,13 @@ const BeatmapsMinifier = require('../BeatmapsMinifier');
 class CacheManager {
     constructor() {
         // noinspection JSUnusedGlobalSymbols
-        this.beatmapsetsCacheLimit = 30;
+        this.beatmapsetsCacheLimit = 100000;
         // noinspection JSUnusedGlobalSymbols
-        this.beatmapsetsCacheCleanItems = 20;
+        this.beatmapsetsCacheCleanItems = 60000;
         // noinspection JSUnusedGlobalSymbols
-        this.beatmapsCacheLimit = 3;
+        this.beatmapsCacheLimit = 30000;
         // noinspection JSUnusedGlobalSymbols
-        this.beatmapsCacheCleanItems = 1;
+        this.beatmapsCacheCleanItems = 20000;
     }
 
     getObjectRam(objectId, objectType) {
