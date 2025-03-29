@@ -22,14 +22,18 @@ class OsuApiHelper extends CacheManager {
         });
 
         this.accessToken = response.data.access_token;
-        this.loadObjectItemsToRamFromFile('beatmapset');
-        this.loadObjectItemsToRamFromFile('beatmap');
+        //this.loadObjectItemsToRamFromFile('beatmapset');
+        //this.loadObjectItemsToRamFromFile('beatmap');
     }
 
     getMapsetData = async (mapsetId) => {
         try {
-            const cachedBeatmapset = this.getObjectRam(mapsetId, 'beatmapset');
-            if (cachedBeatmapset) return cachedBeatmapset;
+            const cachedBeatmapset = await this.getObjectRam(mapsetId, 'beatmapset');
+            if (cachedBeatmapset) {
+                console.log('Meow', mapsetId);
+                return cachedBeatmapset;
+            }
+            //console.log('Нет в кеше:', mapsetId);
 
             const response = await axios.get(this.baseUrl + `beatmapsets/${mapsetId}`, {
                 headers: {
@@ -37,11 +41,11 @@ class OsuApiHelper extends CacheManager {
                     'Content-Type': 'application/json',
                 },
             });
-
+            console.log('Purr', mapsetId);
             this.cacheBeatmapset(response.data);
             //console.log(`The beatmap ${mapsetId} has not found in cache`);
             return response.data;
-        } catch(err) {
+        } catch (err) {
             console.error(err);
         }
     }
@@ -66,7 +70,7 @@ class OsuApiHelper extends CacheManager {
     #getCalculatedBeatmapData(beatmapId, beatmapStructure) {
         const map = new rosu.Beatmap(beatmapStructure);
         const fullCalcBeatmapData = new rosu.Performance({mods: "CL"}).calculate(map);
-        let filteredFullBeatmapData =  BeatmapsFilter.filterCalculatedBeatmapData(fullCalcBeatmapData);
+        let filteredFullBeatmapData = BeatmapsFilter.filterCalculatedBeatmapData(fullCalcBeatmapData);
         return {...filteredFullBeatmapData, id: Number(beatmapId)};
     }
 }

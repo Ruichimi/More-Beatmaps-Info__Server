@@ -1,20 +1,20 @@
 const rateLimit = require('express-rate-limit');
 
 const tokenLimiter = rateLimit({
-    windowMs: 5 * 60 * 1000, // 5 минут
-    max: 5, // 5 запросов за 5 минут
+    windowMs: 30 * 1000,
+    max: 10,
     message: { error: "Слишком много запросов. Попробуйте позже." }
 });
 
 const mapsetLimiter = rateLimit({
     windowMs: 15 * 1000,
-    max: 30,
+    max: 500,
     message: { error: "Слишком много запросов. Попробуйте позже." }
 });
 
 const beatmapLimiter = rateLimit({
-    windowMs: 5 * 60 * 1000,
-    max: 150,
+    windowMs: 60 * 1000,
+    max: 500,
     message: { error: "Слишком много запросов. Попробуйте позже." }
 });
 

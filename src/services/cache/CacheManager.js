@@ -1,25 +1,25 @@
-const RamCacher = require("./RamCacher");
 const FileCacher = require("./FileCacher");
 const BeatmapsFilter = require('../BeatmapsFilter');
 const BeatmapsMinifier = require('../BeatmapsMinifier');
+const dataBase = new FileCacher;
 
 class CacheManager {
     constructor() {
         // noinspection JSUnusedGlobalSymbols
-        this.beatmapsetsCacheLimit = 100000;
+        this.beatmapsetsCacheLimit = 300000;
         // noinspection JSUnusedGlobalSymbols
-        this.beatmapsetsCacheCleanItems = 60000;
+        this.beatmapsetsCacheCleanItems = 30000;
         // noinspection JSUnusedGlobalSymbols
         this.beatmapsCacheLimit = 30000;
         // noinspection JSUnusedGlobalSymbols
         this.beatmapsCacheCleanItems = 20000;
     }
 
-    getObjectRam(objectId, objectType) {
-        const cachedObject = RamCacher.getObjectById(objectId, objectType);
+    async getObjectRam(objectId, objectType) {
+        const cachedObject = await dataBase.getObjectById(objectId, objectType);
         if (cachedObject) {
-            //console.log(`The ${objectType} ${objectId} data received from RAM cache`);
-            return cachedObject;
+            console.log(`The ${objectType} ${objectId} data received from cache`);
+            return {id: Number(objectId), ...cachedObject};
         }
     }
 
@@ -33,14 +33,17 @@ class CacheManager {
         this.#cacheObject(filteredBeatmapData, 'beatmap');
     }
 
-    loadObjectItemsToRamFromFile(dataType) {
+    async loadObjectItemsToRamFromFile(dataType) {
         try {
             let cachedItemsCount = 0;
-            const mapsetsFileCached = FileCacher.getEntireBeatmapsetsCache(dataType);
-
+            const mapsetsFileCached = await dataBase.getObjectCache(dataType);
+            //console.log(mapsetsFileCached);
             for (const [key, mapset] of Object.entries(mapsetsFileCached)) {
-                this.#setObjectRam(mapset, key, dataType);
-                cachedItemsCount++;
+                //console.log(mapset);
+
+                if (this.#setObjectRam(mapset, key, dataType)) {
+                    cachedItemsCount++;
+                }
             }
             console.log(`${cachedItemsCount} ${dataType}s загруженны в оперативную память`);
         } catch(err) {
@@ -55,8 +58,8 @@ class CacheManager {
             object.date = Date.now();
             delete object.id;
 
-            FileCacher.appendToFile({[objectId]: object}, objectType);
-            this.#setObjectRam(object, objectId, objectType);
+            dataBase.setObject(objectId, object, objectType);
+            //this.#setObjectRam(object, objectId, objectType);
         } catch(err) {
             throw new Error(`Failed to cache ${objectType} \n${err.message}`);
         }
@@ -67,10 +70,12 @@ class CacheManager {
         const cacheLimit = this[`${objectType}sCacheLimit`];
         if (cache.size >= cacheLimit) {
             console.log('Превышен лимит кэша, загрузка остановлена.');
-            return cache.size;
+            return false;
         }
 
-        RamCacher.setObject(object, objectId, objectType)
+        RamCacher.setObject(object, objectId, objectType);
+
+        return true;
     }
 
     /**
@@ -89,11 +94,9 @@ class CacheManager {
             }
 
             if (amount || cache.size >= limit) {
-                const clearedRamData = RamCacher.clearOldObjectsByDate(objectType, cleanItems);
-                    // console.log('111', clearedRamData);
-
-                this.#reMinimizeObject(clearedRamData, objectType);
-                FileCacher.writeToFile(clearedRamData, objectType);
+                let clearedRamData = RamCacher.clearOldObjectsByDate(objectType, cleanItems);
+                clearedRamData = this.#reMinimizeObject(clearedRamData, objectType);
+                dataBase.replaceTableData(clearedRamData, objectType);
                 this.#minimizeObject(clearedRamData, objectType);
 
                 return Object.keys(clearedRamData).length;
@@ -150,7 +153,7 @@ class CacheManager {
                 if (cacheType === 'ram') {
                     parsedData = RamCacher.getObjectCacheObject('beatmapset');
                 } else if (cacheType === 'file') {
-                    parsedData = FileCacher.getEntireBeatmapsetsCache('beatmapset');
+                    parsedData = dataBase.getObjectCache('beatmapset');
                 } else {
                     console.log('Попытка получить неверный тип кеша, доступные типы: \'ram\' \'file\'');
                 }
@@ -194,9 +197,9 @@ class CacheManager {
         return RamCacher.beatmapsCache;
     }
 
-    getBeatmapsetByIdCacheFile(id) {
+    getObjectByIdFromDB(id, objectType) {
         try {
-            return FileCacher.getBeatmapsetFromCacheByKey(id);
+            return dataBase.getObjectById(id, objectType);
         } catch (err) {
             console.log(`Не удалось получить карту из файла кеша ${err}`);
         }
