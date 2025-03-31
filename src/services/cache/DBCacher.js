@@ -1,12 +1,11 @@
-const DB = require('../../DB.js');
-const db = new DB();
+const db = new (require('$/DB.js'))();
 
-class DBCache {
-    setObject(objectId, object, objectType) {
+class DBCacher {
+    setObject(objectId, object, objectDate, objectType) {
         return new Promise((resolve, reject) => {
             const tableName = this.getTableNameByObjectType(objectType);
-            db.runAsync(`INSERT OR IGNORE INTO ${tableName} (id, data)
-                         VALUES (?, ?)`, [objectId, JSON.stringify(object)], function (err) {
+            db.runAsync(`INSERT OR IGNORE INTO ${tableName} (id, data, created_at)
+                         VALUES (?, ?, ?)`, [objectId, JSON.stringify(object), objectDate], function (err) {
                 if (err) {
                     reject(new Error(`Failed to append data: ${err.message}`));
                 } else {
@@ -38,11 +37,7 @@ class DBCache {
     async clearOldEntries(objectType, amount) {
         try {
             const tableName = this.getTableNameByObjectType(objectType);
-
-            const rows = await db.allAsync(`SELECT id
-                                              FROM ${tableName}
-                                              ORDER BY json_extract(data, '$.date') ASC
-                                              LIMIT ?`, [amount]);
+            const rows = await this.fetchOldestEntries(tableName, amount);
 
             if (rows.length > 0) {
                 console.log(rows);
@@ -53,9 +48,7 @@ class DBCache {
                     idsToDelete.push(`'${row.id}'`);
                 }
 
-                await db.runAsync(`DELETE
-                                     FROM ${tableName}
-                                     WHERE id IN (${idsToDelete.join(',')})`);
+                await this.deleteEntriesByIds(tableName, idsToDelete);
 
                 console.log(`Удалено ${idsToDelete.length} записей из таблицы ${tableName}`);
             }
@@ -64,12 +57,33 @@ class DBCache {
         }
     }
 
+    async fetchOldestEntries(tableName, limit) {
+        return await db.allAsync(`
+        SELECT id
+        FROM ${tableName}
+        ORDER BY created_at
+        LIMIT ?`, [limit]);
+    }
+
+    async deleteEntriesByIds(tableName, ids) {
+        await db.runAsync(`
+        DELETE FROM ${tableName}
+        WHERE id IN (${ids.join(',')})`);
+    }
+
     async getObjectCount(objectType) {
         const tableName = this.getTableNameByObjectType(objectType);
         return await db.getAsync(`SELECT COUNT(*) AS count
                                     FROM ${tableName}`);
     }
 
+
+    /**
+     * The DB size returns approximate value and not for the specific table but for the entire db.
+     *
+     * @param objectType - Type of object to work with require table.
+     * @returns {Promise<{size: number, count}>}
+     */
     async getTableStats(objectType) {
         try {
             const countRow = await this.getObjectCount(objectType);
@@ -93,4 +107,4 @@ class DBCache {
     }
 }
 
-module.exports = DBCache;
+module.exports = DBCacher;

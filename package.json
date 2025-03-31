@@ -8,6 +8,9 @@
         "nodemon": "nodemon src/server.js",
         "test": "test"
     },
+    "_moduleAliases": {
+        "$": "./src"
+    },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/Cadregich/More-Beatmap-Info__Server.git"
@@ -27,6 +30,7 @@
         "express": "^4.19.2",
         "express-rate-limit": "^7.5.0",
         "jsonwebtoken": "^9.0.2",
+        "module-alias": "^2.2.3",
         "rosu-pp-js": "^2.0.0",
         "sqlite3": "^5.1.7",
         "uuid": "^11.0.5"

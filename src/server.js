@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+require('module-alias/register');
+
 const app = express();
 const port = 3000;
 const routes = require('./routes');
@@ -29,15 +31,22 @@ app.listen(port, async () => {
 });
 
 const fileCacheCommands = {
-    "size-bs": async () => console.log('Размер долгого кеша (beatmapset):', await OsuApi.getCacheSize('beatmapset')),
-    "size-bm": async () => console.log('Размер долгого кеша (beatmapset):', await OsuApi.getCacheSize('beatmap')),
-    "bs": (id) => console.log('Мапсет из долгого кеша (ID:', id, '):', OsuApi.getObjectByIdFromDB(id, 'beatmapset')),
-    "bm": (id) => console.log('Карта из долгого кеша (ID:', id, '):', OsuApi.getObjectByIdFromDB(id, 'beatmap')),
+    "size-bs": async () => console.log('Размер долгого кеша (beatmapset):',
+        await OsuApi.getCacheSize('beatmapset')),
+
+    "size-bm": async () => console.log('Размер долгого кеша (beatmapset):',
+        await OsuApi.getCacheSize('beatmap')),
+
+    "bs": (id) => console.log('Мапсет из долгого кеша (ID:', id, '):',
+        OsuApi.getObjectByIdFromDB(id, 'beatmapset')),
+
+    "bm": (id) => console.log('Карта из долгого кеша (ID:', id, '):',
+        OsuApi.getObjectByIdFromDB(id, 'beatmap')),
 };
 
 const functionCommands = {
-    "clean-bs": (amount) => console.log(OsuApi.cleanItemsAmount('beatmapset', amount)),
-    "clean-bm": (amount) => console.log(OsuApi.cleanItemsAmount('beatmap', amount)),
+    "clean-bs": (amount) => OsuApi.cleanItemsAmount('beatmapset', amount),
+    "clean-bm": (amount) => OsuApi.cleanItemsAmount('beatmap', amount),
 
     "fake-bs": (amount) => OsuApi.createFakeEntries('beatmapset', amount),
     "fake-bm": (amount) => OsuApi.createFakeEntries('beatmap', amount),

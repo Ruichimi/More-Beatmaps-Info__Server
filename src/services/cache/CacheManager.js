@@ -1,17 +1,18 @@
-const FileCacher = require("./DBCache");
+const FileCacher = require("./DBCacher");
 const BeatmapsFilter = require('../BeatmapsFilter');
 const dataBase = new FileCacher;
-const fake = require('../FakeRecordsMaker.js');
+const fake = require('$/services/FakeRecordsMaker.js');
 
 class CacheManager {
     constructor() {
-        // noinspection JSUnusedGlobalSymbols
-        this.beatmapsetsCacheLimit = 300000;
-        // noinspection JSUnusedGlobalSymbols
-        this.beatmapsetsCacheCleanItems = 30000;
-        // noinspection JSUnusedGlobalSymbols
+        //An IDE may show these variables as unused due to indirect usage. Preventing via comments.
+        //noinspection JSUnusedGlobalSymbols
+        this.beatmapsetsCacheLimit = 10;
+        //noinspection JSUnusedGlobalSymbols
+        this.beatmapsetsCacheCleanItems = 5;
+        //noinspection JSUnusedGlobalSymbols
         this.beatmapsCacheLimit = 30000;
-        // noinspection JSUnusedGlobalSymbols
+        //noinspection JSUnusedGlobalSymbols
         this.beatmapsCacheCleanItems = 20000;
     }
 
@@ -38,25 +39,24 @@ class CacheManager {
             const objectSizeLimit = this[`${objectType}sCacheLimit`];
 
             if (objectSizeLimit >= dataBase.getObjectCount(objectType)) {
-                this.cleanItemsAmount(objectType, this[`${objectType}sCacheCleanItems`]);
+                this.cleanItemsAmount(objectType);
             }
 
-
             const objectId = String(object.id);
-            object.date = Date.now();
             delete object.id;
 
-            dataBase.setObject(objectId, object, objectType);
-            //this.#setObjectRam(object, objectId, objectType);
+            dataBase.setObject(objectId, object,  Date.now(), objectType);
         } catch(err) {
             throw new Error(`Failed to cache ${objectType} \n${err.message}`);
         }
     }
 
-    async cleanItemsAmount(objectType, amount) {
+    async cleanItemsAmount(objectType, amount = null) {
         try {
+            amount = amount !== null ? Number(amount) : this[`${objectType}sCacheCleanItems`];
+            if (isNaN(amount)) throw new Error('Invalid amount');
             return await dataBase.clearOldEntries(objectType, amount);
-        } catch(err) {
+        } catch (err) {
             throw new Error(`Failed to clean ${objectType}s cache \n${err.message}`);
         }
     }
@@ -77,21 +77,25 @@ class CacheManager {
         try {
             return dataBase.getObjectById(id, objectType);
         } catch (err) {
-            console.log(`Не удалось получить карту из файла кеша ${err}`);
+            throw new Error(`Не удалось получить карту из файла кеша\n${err.message}`);
         }
     }
 
     async createFakeEntries(cacheType, amount) {
-        amount = Number(amount);
-        const tableName = dataBase.getTableNameByObjectType(cacheType);
-        const maxObjectId = await dataBase.getMaxObjectId(tableName);
+        try {
+            amount = Number(amount);
+            const tableName = dataBase.getTableNameByObjectType(cacheType);
+            const maxObjectId = await dataBase.getMaxObjectId(tableName);
 
-        const boundSetObject = dataBase.setObject.bind(dataBase);
+            const boundSetObject = dataBase.setObject.bind(dataBase);
 
-        if (cacheType === 'beatmapset') {
-            await fake.createFakeMapsetEntries(amount, maxObjectId, boundSetObject);
-        } else if (cacheType === 'beatmap') {
-            await fake.createFakeBeatmapEntries(amount, maxObjectId, boundSetObject);
+            if (cacheType === 'beatmapset') {
+                await fake.createFakeMapsetEntries(amount, maxObjectId, boundSetObject);
+            } else if (cacheType === 'beatmap') {
+                await fake.createFakeBeatmapEntries(amount, maxObjectId, boundSetObject);
+            }
+        } catch(err) {
+            throw new Error(`Failed to create fake entries for ${cacheType}\n${err.message}`);
         }
     }
 }

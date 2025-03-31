@@ -1,6 +1,11 @@
 const { promisify } = require("util");
 const sqlite3 = require("sqlite3").verbose();
 
+/**
+ * Connection to local database - SQLite and creating tables.
+ * The tables will create if needed just when the server starts.
+ * To recreate it, it must be deleted
+ */
 class DB {
     constructor(dbFile = "database.db") {
         this.db = new sqlite3.Database(dbFile, (err) => {
@@ -19,12 +24,14 @@ class DB {
     createTables() {
         const queries = [
             `CREATE TABLE IF NOT EXISTS mapsets (
-                id INTEGER PRIMARY KEY,
-                data TEXT NOT NULL
+                    id INTEGER PRIMARY KEY,
+                    data TEXT NOT NULL,
+                    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
             );`,
             `CREATE TABLE IF NOT EXISTS beatmaps (
-                id INTEGER PRIMARY KEY,
-                data TEXT NOT NULL
+                   id INTEGER PRIMARY KEY,
+                   data TEXT NOT NULL,
+                   created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
             );`
         ];
 
@@ -37,15 +44,18 @@ class DB {
         });
     }
 
-    close() {
-        this.db.close((err) => {
-            if (err) {
-                console.error("Ошибка при закрытии базы данных:", err.message);
-            } else {
-                console.log("База данных закрыта");
-            }
-        });
-    }
+    /**
+     * Currently useless, 'cause we have only one service to the database with constant necessity.
+     */
+    // close() {
+    //     this.db.close((err) => {
+    //         if (err) {
+    //             console.error("Ошибка при закрытии базы данных:", err.message);
+    //         } else {
+    //             console.log("База данных закрыта");
+    //         }
+    //     });
+    // }
 }
 
 module.exports = DB;

@@ -1,6 +1,4 @@
-require('dotenv').config();
-const path = require("path");
-const axios = require(path.resolve(__dirname, "./axios"));
+const axios = require("$/axios");
 const rosu = require("rosu-pp-js");
 const CacheManager = require("./cache/CacheManager");
 const BeatmapsFilter = require('./BeatmapsFilter');
@@ -22,15 +20,13 @@ class OsuApiHelper extends CacheManager {
         });
 
         this.accessToken = response.data.access_token;
-        //this.loadObjectItemsToRamFromFile('beatmapset');
-        //this.loadObjectItemsToRamFromFile('beatmap');
     }
 
     getMapsetData = async (mapsetId) => {
         try {
             const cachedBeatmapset = await this.getObject(mapsetId, 'beatmapset');
             if (cachedBeatmapset) {
-                console.log('Meow', mapsetId);
+                //console.log('Meow', mapsetId);
                 return cachedBeatmapset;
             }
             //console.log('Нет в кеше:', mapsetId);
@@ -41,7 +37,6 @@ class OsuApiHelper extends CacheManager {
                     'Content-Type': 'application/json',
                 },
             });
-            console.log('Purr', mapsetId);
             this.setBeatmapset(response.data);
             //console.log(`The beatmap ${mapsetId} has not found in cache`);
             return response.data;
@@ -51,10 +46,10 @@ class OsuApiHelper extends CacheManager {
     }
 
     async getBeatmapData(beatmapId, beatmapStructure) {
-        const cachedBeatmap = await this.getObject(beatmapId, 'beatmap');
-        if (cachedBeatmap) return cachedBeatmap;
-
         try {
+            const cachedBeatmap = await this.getObject(beatmapId, 'beatmap');
+            if (cachedBeatmap) return cachedBeatmap;
+
             console.log("Getting pp for beatmap: ", beatmapId);
             const calculatedBeatmapData = this.#getCalculatedBeatmapData(beatmapId, beatmapStructure);
             const deepClonedData = JSON.parse(JSON.stringify(calculatedBeatmapData));
@@ -62,16 +57,19 @@ class OsuApiHelper extends CacheManager {
             this.setBeatmap(deepClonedData);
             return calculatedBeatmapData;
         } catch (error) {
-            console.error("Ошибка получения данных:", error);
             throw new Error(`Failed to calculate beatmap data: ${error}`);
         }
     }
 
     #getCalculatedBeatmapData(beatmapId, beatmapStructure) {
-        const map = new rosu.Beatmap(beatmapStructure);
-        const fullCalcBeatmapData = new rosu.Performance({mods: "CL"}).calculate(map);
-        let filteredFullBeatmapData = BeatmapsFilter.filterCalculatedBeatmapData(fullCalcBeatmapData);
-        return {...filteredFullBeatmapData, id: Number(beatmapId)};
+        try {
+            const map = new rosu.Beatmap(beatmapStructure);
+            const fullCalcBeatmapData = new rosu.Performance({mods: "CL"}).calculate(map);
+            let filteredFullBeatmapData = BeatmapsFilter.filterCalculatedBeatmapData(fullCalcBeatmapData);
+            return {...filteredFullBeatmapData, id: Number(beatmapId)};
+        } catch(err) {
+            throw new Error(`Не удалось высчитать данные для карты ${beatmapId}\n${err.message}`);
+        }
     }
 }
 

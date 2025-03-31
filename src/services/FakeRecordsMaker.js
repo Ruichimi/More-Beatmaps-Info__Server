@@ -28,10 +28,9 @@ class FakeRecordsMaker {
                 title: faker.lorem.words(2),
                 bpm: Math.floor(Math.random() * 300),
                 beatmaps: beatmaps,
-                date: Date.now(),
             };
 
-            DBSet(mapsetId, mapsetData, 'beatmapset');
+            DBSet(mapsetId, mapsetData, Date.now(), 'beatmapset');
         }
 
         console.log(`Создано ${numEntries} фейковых записей для mapsets.`);
@@ -52,7 +51,7 @@ class FakeRecordsMaker {
                 }, pp: parseFloat((Math.random() * 500).toFixed(2)), date: Date.now(),
             };
 
-            DBSet(beatmapId, beatmapData, 'beatmap');
+            DBSet(beatmapId, beatmapData, Date.now(), 'beatmap');
         }
 
         console.log(`Создано ${numEntries} фейковых записей для beatmaps.`);
