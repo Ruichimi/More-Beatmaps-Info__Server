@@ -28,7 +28,7 @@ class OsuApiHelper extends CacheManager {
 
     getMapsetData = async (mapsetId) => {
         try {
-            const cachedBeatmapset = await this.getObjectRam(mapsetId, 'beatmapset');
+            const cachedBeatmapset = await this.getObject(mapsetId, 'beatmapset');
             if (cachedBeatmapset) {
                 console.log('Meow', mapsetId);
                 return cachedBeatmapset;
@@ -42,7 +42,7 @@ class OsuApiHelper extends CacheManager {
                 },
             });
             console.log('Purr', mapsetId);
-            this.cacheBeatmapset(response.data);
+            this.setBeatmapset(response.data);
             //console.log(`The beatmap ${mapsetId} has not found in cache`);
             return response.data;
         } catch (err) {
@@ -50,8 +50,8 @@ class OsuApiHelper extends CacheManager {
         }
     }
 
-    getBeatmapData(beatmapId, beatmapStructure) {
-        const cachedBeatmap = this.getObjectRam(beatmapId, 'beatmap');
+    async getBeatmapData(beatmapId, beatmapStructure) {
+        const cachedBeatmap = await this.getObject(beatmapId, 'beatmap');
         if (cachedBeatmap) return cachedBeatmap;
 
         try {
@@ -59,7 +59,7 @@ class OsuApiHelper extends CacheManager {
             const calculatedBeatmapData = this.#getCalculatedBeatmapData(beatmapId, beatmapStructure);
             const deepClonedData = JSON.parse(JSON.stringify(calculatedBeatmapData));
 
-            this.cacheBeatmap(deepClonedData);
+            this.setBeatmap(deepClonedData);
             return calculatedBeatmapData;
         } catch (error) {
             console.error("Ошибка получения данных:", error);

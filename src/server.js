@@ -29,29 +29,21 @@ app.listen(port, async () => {
 });
 
 const fileCacheCommands = {
-    "file-size-bs": () => console.log('Размер долгого кеша (beatmapset):', OsuApi.getCacheSize('beatmapset', 'file')),
-    "file-cached-bs": (id) => console.log('Мапсет из долгого кеша (ID:', id, '):', OsuApi.getObjectByIdFromDB(id, 'beatmapset')),
-    "file-cached-bm": (id) => console.log('Карта из долгого кеша (ID:', id, '):', OsuApi.getObjectByIdFromDB(id, 'beatmap')),
-};
-
-const ramCacheCommands = {
-    "ram-size-bs": () => console.log('Размер кеша оперативной памяти (beatmapset):', OsuApi.getCacheSize('beatmapset', 'ram')),
-    "ram-size-bm": () => console.log('Размер кеша оперативной памяти (beatmap):', OsuApi.getCacheSize('beatmap', 'ram')),
-
-    "ram-all-bs": () => console.log('Весь кеш оперативной памяти (beatmapset):', OsuApi.getEntireBeatmapsetCache()),
-    "ram-all-bm": () => console.log('Весь кеш оперативной памяти (beatmaps):', OsuApi.getEntireBeatmapsCache()),
-
-    "ram-cached-bs": (id, raw) => console.log('Карта из кеша оперативной памяти (ID:', id, '):', OsuApi.getBeatmapsetByIdCache(id, raw)),
-    "ram-cached-bm": (id, raw) => console.log('Мапсет из кеша оперативной памяти (ID:', id, '):', OsuApi.getBeatmapByIdCache(id, raw)),
+    "size-bs": async () => console.log('Размер долгого кеша (beatmapset):', await OsuApi.getCacheSize('beatmapset')),
+    "size-bm": async () => console.log('Размер долгого кеша (beatmapset):', await OsuApi.getCacheSize('beatmap')),
+    "bs": (id) => console.log('Мапсет из долгого кеша (ID:', id, '):', OsuApi.getObjectByIdFromDB(id, 'beatmapset')),
+    "bm": (id) => console.log('Карта из долгого кеша (ID:', id, '):', OsuApi.getObjectByIdFromDB(id, 'beatmap')),
 };
 
 const functionCommands = {
-    "clean-bs": (amount) => console.log(OsuApi.cleanRamCacheIfNeeded('beatmapset', amount)),
-    "clean-bm": (amount) => console.log(OsuApi.cleanRamCacheIfNeeded('beatmap', amount)),
+    "clean-bs": (amount) => console.log(OsuApi.cleanItemsAmount('beatmapset', amount)),
+    "clean-bm": (amount) => console.log(OsuApi.cleanItemsAmount('beatmap', amount)),
+
+    "fake-bs": (amount) => OsuApi.createFakeEntries('beatmapset', amount),
+    "fake-bm": (amount) => OsuApi.createFakeEntries('beatmap', amount),
 }
 
 commandsRunning({
     ...fileCacheCommands,
-    ...ramCacheCommands,
     ...functionCommands
 });

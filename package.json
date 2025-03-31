@@ -26,14 +26,13 @@
         "dotenv": "^16.4.7",
         "express": "^4.19.2",
         "express-rate-limit": "^7.5.0",
-        "js-cookie": "^3.0.5",
         "jsonwebtoken": "^9.0.2",
-        "redis": "^4.7.0",
         "rosu-pp-js": "^2.0.0",
         "sqlite3": "^5.1.7",
         "uuid": "^11.0.5"
     },
     "devDependencies": {
+        "@faker-js/faker": "^9.6.0",
         "nodemon": "^3.1.9"
     }
 }

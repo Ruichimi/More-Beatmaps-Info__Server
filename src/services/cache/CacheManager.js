@@ -1,7 +1,7 @@
-const FileCacher = require("./FileCacher");
+const FileCacher = require("./DBCache");
 const BeatmapsFilter = require('../BeatmapsFilter');
-const BeatmapsMinifier = require('../BeatmapsMinifier');
 const dataBase = new FileCacher;
+const fake = require('../FakeRecordsMaker.js');
 
 class CacheManager {
     constructor() {
@@ -15,7 +15,7 @@ class CacheManager {
         this.beatmapsCacheCleanItems = 20000;
     }
 
-    async getObjectRam(objectId, objectType) {
+    async getObject(objectId, objectType) {
         const cachedObject = await dataBase.getObjectById(objectId, objectType);
         if (cachedObject) {
             console.log(`The ${objectType} ${objectId} data received from cache`);
@@ -23,37 +23,25 @@ class CacheManager {
         }
     }
 
-    cacheBeatmapset(mapsetData) {
+    setBeatmapset(mapsetData) {
         let filteredMapset = BeatmapsFilter.filterBeatmapset(mapsetData);
-        this.#cacheObject(filteredMapset, 'beatmapset');
+        this.#setObject(filteredMapset, 'beatmapset');
     }
 
-    cacheBeatmap(beatmapData) {
+    setBeatmap(beatmapData) {
         let filteredBeatmapData = BeatmapsFilter.filterBeatmap(beatmapData);
-        this.#cacheObject(filteredBeatmapData, 'beatmap');
+        this.#setObject(filteredBeatmapData, 'beatmap');
     }
 
-    async loadObjectItemsToRamFromFile(dataType) {
+    #setObject(object, objectType) {
         try {
-            let cachedItemsCount = 0;
-            const mapsetsFileCached = await dataBase.getObjectCache(dataType);
-            //console.log(mapsetsFileCached);
-            for (const [key, mapset] of Object.entries(mapsetsFileCached)) {
-                //console.log(mapset);
+            const objectSizeLimit = this[`${objectType}sCacheLimit`];
 
-                if (this.#setObjectRam(mapset, key, dataType)) {
-                    cachedItemsCount++;
-                }
+            if (objectSizeLimit >= dataBase.getObjectCount(objectType)) {
+                this.cleanItemsAmount(objectType, this[`${objectType}sCacheCleanItems`]);
             }
-            console.log(`${cachedItemsCount} ${dataType}s загруженны в оперативную память`);
-        } catch(err) {
-            throw new Error(`Failed to load ${dataType} to RAM from file \n${err.message}`);
-        }
-    }
 
-    #cacheObject(object, objectType) {
-        try {
-            this.cleanRamCacheIfNeeded(objectType);
+
             const objectId = String(object.id);
             object.date = Date.now();
             delete object.id;
@@ -65,136 +53,24 @@ class CacheManager {
         }
     }
 
-    #setObjectRam(object, objectId, objectType) {
-        const cache = RamCacher.getCacheByType(objectType);
-        const cacheLimit = this[`${objectType}sCacheLimit`];
-        if (cache.size >= cacheLimit) {
-            console.log('Превышен лимит кэша, загрузка остановлена.');
-            return false;
-        }
-
-        RamCacher.setObject(object, objectId, objectType);
-
-        return true;
-    }
-
-    /**
-     * Cleans the cache.
-     * @returns {number} The count of items in cache after cleaning.
-     */
-
-    cleanRamCacheIfNeeded(objectType, amount = null) {
+    async cleanItemsAmount(objectType, amount) {
         try {
-            const cache = RamCacher[`${objectType}sCache`];
-            const limit = this[`${objectType}sCacheLimit`];
-            const cleanItems = amount ?? this[`${objectType}sCacheCleanItems`];
-
-            if (amount && cache.size < amount) {
-                throw new Error(`Amount smaller than items count ${cache.size}, ${amount}`);
-            }
-
-            if (amount || cache.size >= limit) {
-                let clearedRamData = RamCacher.clearOldObjectsByDate(objectType, cleanItems);
-                clearedRamData = this.#reMinimizeObject(clearedRamData, objectType);
-                dataBase.replaceTableData(clearedRamData, objectType);
-                this.#minimizeObject(clearedRamData, objectType);
-
-                return Object.keys(clearedRamData).length;
-            } else {
-                return 0;
-            }
+            return await dataBase.clearOldEntries(objectType, amount);
         } catch(err) {
             throw new Error(`Failed to clean ${objectType}s cache \n${err.message}`);
         }
-    }
-
-    #reMinimizeObject(object, objectType) {
-        let resultObject = {};
-        let reMinimizedData = null;
-
-        for (let objectId in object) {
-            let value = object[objectId];
-            if (objectType === 'beatmapset') {
-                reMinimizedData = BeatmapsMinifier.reMinimizeBeatmapset(value);
-            } else if (objectType === 'beatmap') {
-                reMinimizedData = BeatmapsMinifier.reMinimizeBeatmap(value);
-            }
-            resultObject[objectId] = reMinimizedData;
-        }
-
-        return resultObject;
-    }
-
-    #minimizeObject(object, objectType) {
-        let resultObject = {};
-        let reMinimizedData = null;
-
-        for (let objectId in object) {
-            let value = object[objectId];
-            if (objectType === 'beatmapset') {
-                reMinimizedData = BeatmapsMinifier.minimizeBeatmapset(value);
-            } else if (objectType === 'beatmap') {
-                reMinimizedData = BeatmapsMinifier.minimizeBeatmap(value);
-            }
-            resultObject[objectId] = reMinimizedData;
-        }
-
-        return resultObject;
     }
 
    /*
     * Next methods currently using only for commands for testing the cache
     */
 
-    getCacheSize(objectType, cacheType) {
+    async getCacheSize(objectType) {
         try {
-            let parsedData = null;
-            if (objectType === 'beatmapset') {
-                if (cacheType === 'ram') {
-                    parsedData = RamCacher.getObjectCacheObject('beatmapset');
-                } else if (cacheType === 'file') {
-                    parsedData = dataBase.getObjectCache('beatmapset');
-                } else {
-                    console.log('Попытка получить неверный тип кеша, доступные типы: \'ram\' \'file\'');
-                }
-            } else if (objectType === 'beatmap') {
-                console.log('beatmap');
-                parsedData = RamCacher.getObjectCacheObject('beatmap');
-            }
-
-            return this.#getObjectSize(parsedData);
+            return await dataBase.getTableStats(objectType);
         } catch(err) {
-            throw new Error(`Failed to get ${objectType}s cache size from ${cacheType} \n${err.message}`);
+            throw new Error(`Failed to get ${objectType}s cache \n${err.message}`);
         }
-    }
-
-    #getObjectSize(parsedData) {
-        if (typeof parsedData !== 'object' || parsedData === null) {
-            console.log('Файл кэша содержит некорректные данные.');
-            return {sizeInBytes: 0, numberOfEntries: 0};
-        }
-        const sizeInBytes = new TextEncoder().encode(JSON.stringify(parsedData)).length;
-        const numberOfEntries = Object.keys(parsedData).length;
-
-        return {sizeInBytes, numberOfEntries};
-    }
-
-    getBeatmapsetByIdCache(id, raw = false) {
-        if (raw) return RamCacher.beatmapsetsCache.get(id);
-        return RamCacher.getObjectById(id, 'beatmapset');
-    }
-
-    getBeatmapByIdCache(id, raw = false) {
-        if (raw) return RamCacher.beatmapsCache.get(id);
-        return RamCacher.getObjectById(id, 'beatmap');
-    }
-
-    getEntireBeatmapsetCache() {
-        return RamCacher.beatmapsetsCache;
-    }
-
-    getEntireBeatmapsCache() {
-        return RamCacher.beatmapsCache;
     }
 
     getObjectByIdFromDB(id, objectType) {
@@ -202,6 +78,20 @@ class CacheManager {
             return dataBase.getObjectById(id, objectType);
         } catch (err) {
             console.log(`Не удалось получить карту из файла кеша ${err}`);
+        }
+    }
+
+    async createFakeEntries(cacheType, amount) {
+        amount = Number(amount);
+        const tableName = dataBase.getTableNameByObjectType(cacheType);
+        const maxObjectId = await dataBase.getMaxObjectId(tableName);
+
+        const boundSetObject = dataBase.setObject.bind(dataBase);
+
+        if (cacheType === 'beatmapset') {
+            await fake.createFakeMapsetEntries(amount, maxObjectId, boundSetObject);
+        } else if (cacheType === 'beatmap') {
+            await fake.createFakeBeatmapEntries(amount, maxObjectId, boundSetObject);
         }
     }
 }
