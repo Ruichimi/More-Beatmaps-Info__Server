@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { tokenLimiter, mapsetLimiter, beatmapLimiter } = require('./middlewares/rateLimiters');
+const { tokenLimiter, mapsetLimiter, beatmapLimiter, cachedBeatmapLimiter } = require('./middlewares/rateLimiters');
 const RequestSizeLimit = require('./middlewares/RequestSizeLimit');
 const authenticateToken = require('./middlewares/jwt');
 const OsuApi = require('./services/OsuApiHelper');
@@ -18,8 +18,7 @@ router.post('/api/token', tokenLimiter, (req, res) => {
     res.json({ token });
 });
 
-router.get('/api/MapsetData/:id', authenticateToken, mapsetLimiter, RequestSizeLimit, async (req, res) => {
-    const mapsetId = req.params.id;
+router.get('/api/MapsetData/:id', authenticateToken, mapsetLimiter, RequestSizeLimit, async (req, res) => {const mapsetId = req.params.id;
     try {
         const data = await OsuApi.getMapsetData(mapsetId);
         res.json(data);
@@ -30,6 +29,7 @@ router.get('/api/MapsetData/:id', authenticateToken, mapsetLimiter, RequestSizeL
 });
 
 router.get('/api/MapsetsData', authenticateToken, mapsetLimiter, RequestSizeLimit, async (req, res) => {
+    //console.log(req.headers['keep-alive'] || "нету");
     const items = req.query.mapsetsIds ? req.query.mapsetsIds.split(',') : [];
     let result = {};
 
@@ -55,6 +55,18 @@ router.post('/api/BeatmapPP/:id', express.json(), authenticateToken, RequestSize
         const calculatedBeatmapData = await OsuApi.getBeatmapData(beatmapId, beatmap);
         res.json(calculatedBeatmapData);
     } catch (error) {
+        res.status(500).json({ error: "Ошибка получения данных" });
+    }
+});
+
+router.get('/api/cachedBeatmapData/:id', authenticateToken, cachedBeatmapLimiter, async (req, res) => {
+    const beatmapId = req.params.id;
+    try {
+        const data = await OsuApi.tryGetBeatmapDataFromCache(beatmapId);
+        if (data) res.json(data);
+        else res.status(404).json({ error: "Данные не найдены" });
+    } catch (error) {
+        console.error("Ошибка получения данных:", error);
         res.status(500).json({ error: "Ошибка получения данных" });
     }
 });

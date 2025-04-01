@@ -19,7 +19,7 @@ class CacheManager {
     async getObject(objectId, objectType) {
         const cachedObject = await dataBase.getObjectById(objectId, objectType);
         if (cachedObject) {
-            console.log(`The ${objectType} ${objectId} data received from cache`);
+            //console.log(`The ${objectType} ${objectId} data received from cache`);
             return {id: Number(objectId), ...cachedObject};
         }
     }

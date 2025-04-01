@@ -4,10 +4,12 @@ require('dotenv').config();
 require('module-alias/register');
 
 const app = express();
+
 const port = 3000;
 const routes = require('./routes');
 const { commandsRunning } = require('./commands/ServerRunningCommandsInterface');
 const OsuApi = require('./services/OsuApiHelper');
+
 
 app.use(express.json({ limit: '320kb' }));
 
