@@ -21,6 +21,8 @@ class CacheManager {
         if (cachedObject) {
             //console.log(`The ${objectType} ${objectId} data received from cache`);
             return {id: Number(objectId), ...cachedObject};
+        } else {
+            return null;
         }
     }
 

@@ -46,8 +46,7 @@ class OsuApiHelper extends CacheManager {
     }
 
     async tryGetBeatmapDataFromCache(beatmapId) {
-        const beatmap = await this.getObject(beatmapId, 'beatmap');
-        if (beatmap) return beatmap;
+        return await this.getObject(beatmapId, 'beatmap');
     }
 
     async getBeatmapData(beatmapId, beatmapStructure) {

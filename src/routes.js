@@ -63,8 +63,7 @@ router.get('/api/cachedBeatmapData/:id', authenticateToken, cachedBeatmapLimiter
     const beatmapId = req.params.id;
     try {
         const data = await OsuApi.tryGetBeatmapDataFromCache(beatmapId);
-        if (data) res.json(data);
-        else res.status(404).json({ error: "Данные не найдены" });
+        res.json(data);
     } catch (error) {
         console.error("Ошибка получения данных:", error);
         res.status(500).json({ error: "Ошибка получения данных" });
