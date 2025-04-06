@@ -1,4 +1,4 @@
-const { promisify } = require("util");
+const {promisify} = require("util");
 const sqlite3 = require("sqlite3").verbose();
 
 /**
@@ -15,6 +15,21 @@ class DB {
                 console.log("Успешное подключение к базе данных");
             }
         });
+        this.db.run("PRAGMA journal_mode=WAL;", (err) => {
+            if (err) {
+                console.error("Ошибка при установке WAL режима:", err.message);
+            } else {
+                console.log("WAL режим успешно включён");
+            }
+        });
+        this.db.run("PRAGMA synchronous = NORMAL;", (err) => {
+            if (err) {
+                console.error("Ошибка при установке synchronous = NORMAL:", err.message);
+            }
+            else {
+                console.log("Слабая синхронизация установлена");
+            }
+        });
         this.getAsync = promisify(this.db.get).bind(this.db);
         this.runAsync = promisify(this.db.run).bind(this.db);
         this.allAsync = promisify(this.db.all).bind(this.db);
@@ -23,16 +38,32 @@ class DB {
 
     createTables() {
         const queries = [
-            `CREATE TABLE IF NOT EXISTS mapsets (
-                    id INTEGER PRIMARY KEY,
-                    data TEXT NOT NULL,
-                    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
-            );`,
-            `CREATE TABLE IF NOT EXISTS beatmaps (
-                   id INTEGER PRIMARY KEY,
-                   data TEXT NOT NULL,
-                   created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
-            );`
+            `CREATE TABLE IF NOT EXISTS mapsets
+             (
+                 id         INTEGER PRIMARY KEY,
+                 data       TEXT    NOT NULL,
+                 created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+             );`,
+            `CREATE TABLE IF NOT EXISTS beatmaps
+             (
+                 id         INTEGER PRIMARY KEY,
+                 data       TEXT    NOT NULL,
+                 created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+             );`,
+                `CREATE TABLE IF NOT EXISTS mapsets_archive
+                 (
+                     id         INTEGER PRIMARY KEY,
+                     data       TEXT    NOT NULL,
+                     created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+                     deleted_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+                 );`,
+            `CREATE TABLE IF NOT EXISTS beatmaps_archive
+             (
+                 id         INTEGER PRIMARY KEY,
+                 data       TEXT    NOT NULL,
+                 created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+                 deleted_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+             );`
         ];
 
         queries.forEach((query) => {

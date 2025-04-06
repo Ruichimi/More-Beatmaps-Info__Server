@@ -39,7 +39,7 @@ router.get('/api/MapsetsData', authenticateToken, mapsetLimiter, RequestSizeLimi
 
     try {
         for (const item of items) {
-            result[item] = await OsuApi.getMapsetData(item);
+            result[item] = await OsuApi.getMapsetData(item, true);
         }
         res.status(200).json(result);
     } catch (err) {

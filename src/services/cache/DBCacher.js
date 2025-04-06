@@ -1,18 +1,16 @@
 const db = new (require('$/DB.js'))();
 
 class DBCacher {
-    setObject(objectId, object, objectDate, objectType) {
-        return new Promise((resolve, reject) => {
+    async setObject(objectId, object, objectDate, objectType) {
+        try {
             const tableName = this.getTableNameByObjectType(objectType);
-            db.runAsync(`INSERT OR IGNORE INTO ${tableName} (id, data, created_at)
-                         VALUES (?, ?, ?)`, [objectId, JSON.stringify(object), objectDate], function (err) {
-                if (err) {
-                    reject(new Error(`Failed to append data: ${err.message}`));
-                } else {
-                    resolve();
-                }
-            });
-        });
+            await db.runAsync(`INSERT OR IGNORE INTO ${tableName} (id, data, created_at)
+                           VALUES (?, ?, ?)`, [objectId, JSON.stringify(object), objectDate]);
+
+            console.log(`Loaded beatmap ${objectId} to DB`);
+        } catch (err) {
+            throw new Error(`Failed to append data: ${err.message}`);
+        }
     }
 
     getTableNameByObjectType(objectType) {
@@ -25,8 +23,8 @@ class DBCacher {
         try {
             const tableName = this.getTableNameByObjectType(objectType);
             const row = await db.getAsync(`SELECT *
-                                             FROM ${tableName}
-                                             WHERE id = ?`, [objectId]);
+                                           FROM ${tableName}
+                                           WHERE id = ?`, [objectId]);
 
             return row ? JSON.parse(row.data) : null;
         } catch (error) {
@@ -40,8 +38,6 @@ class DBCacher {
             const rows = await this.fetchOldestEntries(tableName, amount);
 
             if (rows.length > 0) {
-                console.log(rows);
-
                 const idsToDelete = [];
                 while (rows.length > 0 && idsToDelete.length < amount) {
                     const row = rows.pop();
@@ -59,22 +55,34 @@ class DBCacher {
 
     async fetchOldestEntries(tableName, limit) {
         return await db.allAsync(`
-        SELECT id
-        FROM ${tableName}
-        ORDER BY created_at
-        LIMIT ?`, [limit]);
+            SELECT id
+            FROM ${tableName}
+            ORDER BY created_at
+            LIMIT ?`, [limit]);
     }
 
     async deleteEntriesByIds(tableName, ids) {
+        const deletedTableName = `${tableName}_archive`; // Формируем имя таблицы для хранения удалённых данных
+
         await db.runAsync(`
-        DELETE FROM ${tableName}
-        WHERE id IN (${ids.join(',')})`);
+            INSERT INTO ${deletedTableName} (id, data, created_at, deleted_at)
+            SELECT id, data, created_at, strftime('%s', 'now')
+            FROM ${tableName}
+            WHERE id IN (${ids.join(',')})
+        `);
+
+        // Теперь удаляем их из основной таблицы
+        await db.runAsync(`
+            DELETE
+            FROM ${tableName}
+            WHERE id IN (${ids.join(',')})
+        `);
     }
 
     async getObjectCount(objectType) {
         const tableName = this.getTableNameByObjectType(objectType);
         return await db.getAsync(`SELECT COUNT(*) AS count
-                                    FROM ${tableName}`);
+                                  FROM ${tableName}`);
     }
 
 
@@ -99,7 +107,7 @@ class DBCacher {
     async getMaxObjectId(tableName) {
         try {
             let row = await db.getAsync(`SELECT MAX(id) AS maxId
-                                           FROM ${tableName}`);
+                                         FROM ${tableName}`);
             return Number(row?.maxId) || 0;
         } catch (error) {
             throw new Error(`Failed to get max object id for ${tableName} table:\n${error.message}`);

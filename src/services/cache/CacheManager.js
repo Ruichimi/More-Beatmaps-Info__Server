@@ -75,9 +75,13 @@ class CacheManager {
         }
     }
 
-    getObjectByIdFromDB(id, objectType) {
+    async getObjectByIdFromDB(id, objectType) {
         try {
-            return dataBase.getObjectById(id, objectType);
+            const startTime = Date.now();
+            const result = await dataBase.getObjectById(id, objectType);
+            const endTime = Date.now();
+            console.log(result);
+            console.log(`Operation to get ${objectType} by ID ${id} took ${endTime - startTime} ms`);
         } catch (err) {
             throw new Error(`Не удалось получить карту из файла кеша\n${err.message}`);
         }

@@ -30,7 +30,8 @@ class FakeRecordsMaker {
                 beatmaps: beatmaps,
             };
 
-            DBSet(mapsetId, mapsetData, Date.now(), 'beatmapset');
+            await DBSet(mapsetId, mapsetData, Date.now(), 'beatmapset');
+
         }
 
         console.log(`Создано ${numEntries} фейковых записей для mapsets.`);

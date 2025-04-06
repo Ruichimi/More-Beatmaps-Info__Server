@@ -22,14 +22,15 @@ class OsuApiHelper extends CacheManager {
         this.accessToken = response.data.access_token;
     }
 
-    getMapsetData = async (mapsetId) => {
+    getMapsetData = async (mapsetId, measureTime = false) => {
         try {
+            await new Promise(resolve => setTimeout(resolve, 1000));
             const cachedBeatmapset = await this.getObject(mapsetId, 'beatmapset');
             if (cachedBeatmapset) {
-                //console.log('Meow', mapsetId);
                 return cachedBeatmapset;
             }
-            //console.log('Нет в кеше:', mapsetId);
+
+            const startTime = measureTime ? performance.now() : null;
 
             const response = await axios.get(this.baseUrl + `beatmapsets/${mapsetId}`, {
                 headers: {
@@ -37,13 +38,19 @@ class OsuApiHelper extends CacheManager {
                     'Content-Type': 'application/json',
                 },
             });
+
+            if (measureTime) {
+                const endTime = performance.now();
+                console.log(`Request ${mapsetId} took ${(endTime - startTime).toFixed(2)} ms`);
+            }
+
             this.setBeatmapset(response.data);
-            //console.log(`The beatmap ${mapsetId} has not found in cache`);
             return response.data;
         } catch (err) {
             console.error(err);
         }
     }
+
 
     async tryGetBeatmapDataFromCache(beatmapId) {
         return await this.getObject(beatmapId, 'beatmap');

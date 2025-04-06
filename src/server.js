@@ -39,11 +39,9 @@ const fileCacheCommands = {
     "size-bm": async () => console.log('Размер долгого кеша (beatmapset):',
         await OsuApi.getCacheSize('beatmap')),
 
-    "bs": (id) => console.log('Мапсет из долгого кеша (ID:', id, '):',
-        OsuApi.getObjectByIdFromDB(id, 'beatmapset')),
+    "bs": (id) => OsuApi.getObjectByIdFromDB(id, 'beatmapset'),
 
-    "bm": (id) => console.log('Карта из долгого кеша (ID:', id, '):',
-        OsuApi.getObjectByIdFromDB(id, 'beatmap')),
+    "bm": (id) =>  OsuApi.getObjectByIdFromDB(id, 'beatmap'),
 };
 
 const functionCommands = {
