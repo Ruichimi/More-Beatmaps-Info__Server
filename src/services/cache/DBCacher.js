@@ -41,7 +41,7 @@ class DBCacher {
                 const idsToDelete = [];
                 while (rows.length > 0 && idsToDelete.length < amount) {
                     const row = rows.pop();
-                    idsToDelete.push(`'${row.id}'`);
+                    idsToDelete.push(row.id);
                 }
 
                 await this.deleteEntriesByIds(tableName, idsToDelete);
@@ -62,16 +62,15 @@ class DBCacher {
     }
 
     async deleteEntriesByIds(tableName, ids) {
-        const deletedTableName = `${tableName}_archive`; // Формируем имя таблицы для хранения удалённых данных
+        const deletedTableName = `${tableName}_archive`;
 
         await db.runAsync(`
-            INSERT INTO ${deletedTableName} (id, data, created_at, deleted_at)
+            INSERT OR IGNORE INTO ${deletedTableName} (id, data, created_at, deleted_at)
             SELECT id, data, created_at, strftime('%s', 'now')
             FROM ${tableName}
             WHERE id IN (${ids.join(',')})
         `);
 
-        // Теперь удаляем их из основной таблицы
         await db.runAsync(`
             DELETE
             FROM ${tableName}
@@ -79,10 +78,16 @@ class DBCacher {
         `);
     }
 
-    async getObjectCount(objectType) {
-        const tableName = this.getTableNameByObjectType(objectType);
-        return await db.getAsync(`SELECT COUNT(*) AS count
-                                  FROM ${tableName}`);
+    async getObjectCount(objectType, archive = false) {
+        let tableName = this.getTableNameByObjectType(objectType);
+        if (archive) tableName = `${tableName}_archive`;
+
+        const count = await db.getAsync(`
+            SELECT COUNT(*) AS count
+            FROM ${tableName}
+        `);
+
+        return count.count;
     }
 
 
@@ -94,11 +99,11 @@ class DBCacher {
      */
     async getTableStats(objectType) {
         try {
-            const countRow = await this.getObjectCount(objectType);
+            const count = await this.getObjectCount(objectType);
             const sizeRow = await db.getAsync(`PRAGMA page_count;`);
             const pageSizeRow = await db.getAsync(`PRAGMA page_size;`);
             const size = sizeRow.page_count * pageSizeRow.page_size;
-            return {count: countRow.count, size};
+            return {count: count, size};
         } catch (error) {
             throw new Error(`Failed to get table stats for ${objectType}: ${error.message}`);
         }
@@ -112,6 +117,12 @@ class DBCacher {
         } catch (error) {
             throw new Error(`Failed to get max object id for ${tableName} table:\n${error.message}`);
         }
+    }
+
+    async cleanObjectArchive(objectType) {
+        const tableName = `${this.getTableNameByObjectType(objectType)}_archive`;
+        await db.runAsync(`DELETE FROM ${tableName}`);
+        return true;
     }
 }
 

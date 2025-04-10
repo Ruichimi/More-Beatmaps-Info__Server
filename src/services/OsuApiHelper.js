@@ -24,7 +24,7 @@ class OsuApiHelper extends CacheManager {
 
     getMapsetData = async (mapsetId, measureTime = false) => {
         try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            //await new Promise(resolve => setTimeout(resolve, 1000));
             const cachedBeatmapset = await this.getObject(mapsetId, 'beatmapset');
             if (cachedBeatmapset) {
                 return cachedBeatmapset;
@@ -44,8 +44,9 @@ class OsuApiHelper extends CacheManager {
                 console.log(`Request ${mapsetId} took ${(endTime - startTime).toFixed(2)} ms`);
             }
 
-            this.setBeatmapset(response.data);
-            return response.data;
+            let filteredMapset = BeatmapsFilter.filterBeatmapset(response.data);
+            this.setBeatmapset(filteredMapset);
+            return filteredMapset;
         } catch (err) {
             console.error(err);
         }

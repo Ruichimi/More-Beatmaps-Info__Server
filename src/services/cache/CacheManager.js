@@ -27,8 +27,7 @@ class CacheManager {
     }
 
     setBeatmapset(mapsetData) {
-        let filteredMapset = BeatmapsFilter.filterBeatmapset(mapsetData);
-        this.#setObject(filteredMapset, 'beatmapset');
+        this.#setObject(mapsetData, 'beatmapset');
     }
 
     setBeatmap(beatmapData) {
@@ -102,6 +101,15 @@ class CacheManager {
             }
         } catch(err) {
             throw new Error(`Failed to create fake entries for ${cacheType}\n${err.message}`);
+        }
+    }
+
+    async cleanObjectArchive(objectType) {
+        const archiveObjectCount = await dataBase.getObjectCount(objectType, true);
+        console.log(archiveObjectCount);
+        const cleanStatus = await dataBase.cleanObjectArchive(objectType);
+        if (cleanStatus) {
+            console.log(`Таблица для ${objectType} очищена. Убрано: ${archiveObjectCount} записей`);
         }
     }
 }

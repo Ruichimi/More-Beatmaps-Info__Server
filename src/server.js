@@ -45,6 +45,9 @@ const fileCacheCommands = {
 };
 
 const functionCommands = {
+    "clean-archive-bs": () => OsuApi.cleanObjectArchive('beatmapset'),
+    "clean-archive-bm": () => OsuApi.cleanObjectArchive('beatmap'),
+
     "clean-bs": (amount) => OsuApi.cleanItemsAmount('beatmapset', amount),
     "clean-bm": (amount) => OsuApi.cleanItemsAmount('beatmap', amount),
 

@@ -30,6 +30,7 @@ router.get('/api/MapsetData/:id', authenticateToken, mapsetLimiter, RequestSizeL
 
 router.get('/api/MapsetsData', authenticateToken, mapsetLimiter, RequestSizeLimit, async (req, res) => {
     //console.log(req.headers['keep-alive'] || "нету");
+    //return res.json('угабуга');
     const items = req.query.mapsetsIds ? req.query.mapsetsIds.split(',') : [];
     let result = {};
 
@@ -50,6 +51,7 @@ router.get('/api/MapsetsData', authenticateToken, mapsetLimiter, RequestSizeLimi
 
 router.post('/api/BeatmapPP/:id', express.json(), authenticateToken, RequestSizeLimit, beatmapLimiter, async (req, res) => {
     const { id: beatmapId } = req.params;
+
     const { beatmap } = req.body;
     try {
         const calculatedBeatmapData = await OsuApi.getBeatmapData(beatmapId, beatmap);
@@ -61,6 +63,7 @@ router.post('/api/BeatmapPP/:id', express.json(), authenticateToken, RequestSize
 
 router.get('/api/cachedBeatmapData/:id', authenticateToken, cachedBeatmapLimiter, async (req, res) => {
     const beatmapId = req.params.id;
+
     try {
         const data = await OsuApi.tryGetBeatmapDataFromCache(beatmapId);
         res.json(data);
