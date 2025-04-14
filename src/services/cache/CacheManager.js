@@ -20,7 +20,7 @@ class CacheManager {
         const cachedObject = await dataBase.getObjectById(objectId, objectType);
         if (cachedObject) {
             //console.log(`The ${objectType} ${objectId} data received from cache`);
-            return {id: Number(objectId), ...cachedObject};
+            return cachedObject;
         } else {
             return null;
         }
@@ -44,7 +44,6 @@ class CacheManager {
             }
 
             const objectId = String(object.id);
-            delete object.id;
 
             dataBase.setObject(objectId, object,  Date.now(), objectType);
         } catch(err) {
@@ -54,6 +53,7 @@ class CacheManager {
 
     async cleanItemsAmount(objectType, amount = null) {
         try {
+            if (amount === 'all' || amount === '*') amount = 10000000;
             amount = amount !== null ? Number(amount) : this[`${objectType}sCacheCleanItems`];
             if (isNaN(amount)) throw new Error('Invalid amount');
             return await dataBase.clearOldEntries(objectType, amount);

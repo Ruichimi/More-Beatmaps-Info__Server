@@ -1,57 +1,35 @@
-const axios = require("$/axios");
 const rosu = require("rosu-pp-js");
-const CacheManager = require("./cache/CacheManager");
-const BeatmapsFilter = require('./BeatmapsFilter');
+const OsuApiRequestProcessor = require("./OsuApiRequestProcessor");
+const osuApi = new OsuApiRequestProcessor();
+const CacheManager = require("../cache/CacheManager");
+const BeatmapsFilter = require('../BeatmapsFilter');
 
 class OsuApiHelper extends CacheManager {
     constructor() {
         super();
-        this.baseUrl = 'https://osu.ppy.sh/api/v2/';
         this.clientId = process.env.CLIENT_ID;
         this.clientSecret = process.env.CLIENT_SECRET;
         this.accessToken = null;
     }
 
-    async init() {
-        const response = await axios.post('https://osu.ppy.sh/oauth/token', `client_id=${this.clientId}&client_secret=${this.clientSecret}&grant_type=client_credentials&scope=public`, {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json',
-            },
-        });
-
-        this.accessToken = response.data.access_token;
-    }
-
-    getMapsetData = async (mapsetId, measureTime = false) => {
+    getMapsetData = async (mapsetId) => {
         try {
-            //await new Promise(resolve => setTimeout(resolve, 1000));
             const cachedBeatmapset = await this.getObject(mapsetId, 'beatmapset');
             if (cachedBeatmapset) {
                 return cachedBeatmapset;
             }
 
-            const startTime = measureTime ? performance.now() : null;
+            const mapsetData = await osuApi.getBeatmapset(mapsetId);
 
-            const response = await axios.get(this.baseUrl + `beatmapsets/${mapsetId}`, {
-                headers: {
-                    'Authorization': `Bearer ${this.accessToken}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (measureTime) {
-                const endTime = performance.now();
-                console.log(`Request ${mapsetId} took ${(endTime - startTime).toFixed(2)} ms`);
-            }
-
-            let filteredMapset = BeatmapsFilter.filterBeatmapset(response.data);
+            let filteredMapset = BeatmapsFilter.filterBeatmapset(mapsetData);
+            //filteredMapset is a reference, so mutating it affects the returned value.
             this.setBeatmapset(filteredMapset);
             return filteredMapset;
         } catch (err) {
             console.error(err);
+            return null;
         }
     }
-
 
     async tryGetBeatmapDataFromCache(beatmapId) {
         return await this.getObject(beatmapId, 'beatmap');

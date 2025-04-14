@@ -8,7 +8,7 @@ const app = express();
 const port = 3000;
 const routes = require('./routes');
 const { commandsRunning } = require('./commands/ServerRunningCommandsInterface');
-const OsuApi = require('./services/OsuApiHelper');
+const OsuApi = require('./services/OsuApi/OsuApiHelper');
 
 
 app.use(express.json({ limit: '320kb' }));
@@ -24,12 +24,6 @@ app.use(routes);
 
 app.listen(port, async () => {
     console.log(`Сервер запущен на http://localhost:${port}`);
-    try {
-        await OsuApi.init();
-        console.log("OsuApiHelper инициализирован.");
-    } catch (error) {
-        console.error("Ошибка при инициализации OsuApiHelper:", error);
-    }
 });
 
 const fileCacheCommands = {

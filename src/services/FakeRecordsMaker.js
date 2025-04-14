@@ -23,6 +23,7 @@ class FakeRecordsMaker {
             }
 
             const mapsetData = {
+                id: mapsetId,
                 creator: faker.person.fullName(),
                 status: ['ranked', 'pending', 'graveyard'][Math.floor(Math.random() * 3)],
                 title: faker.lorem.words(2),
@@ -49,7 +50,7 @@ class FakeRecordsMaker {
                     nSliders: Math.floor(Math.random() * 200),
                     speedNoteCount: parseFloat((Math.random() * 600).toFixed(2)),
                     flashlight: parseFloat((Math.random() * 5).toFixed(2)),
-                }, pp: parseFloat((Math.random() * 500).toFixed(2)), date: Date.now(),
+                }, id: beatmapId, pp: parseFloat((Math.random() * 500).toFixed(2)), date: Date.now(),
             };
 
             DBSet(beatmapId, beatmapData, Date.now(), 'beatmap');
