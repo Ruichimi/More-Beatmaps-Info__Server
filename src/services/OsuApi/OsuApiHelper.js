@@ -26,7 +26,7 @@ class OsuApiHelper extends CacheManager {
             this.setBeatmapset(filteredMapset);
             return filteredMapset;
         } catch (err) {
-            console.error(err);
+            console.error(err.message);
             return null;
         }
     }
