@@ -21,23 +21,42 @@ router.post('/api/token', tokenLimiter, (req, res) => {
 router.get('/api/MapsetsData', authenticateToken, mapsetLimiter, RequestSizeLimit, async (req, res) => {
     //console.log(req.headers['keep-alive'] || "нету");
     //return res.json('угабуга');
-    const items = req.query.mapsetsIds ? req.query.mapsetsIds.split(',') : [];
+    const mapsetIds = req.query.mapsetsIds ? req.query.mapsetsIds.split(',') : [];
     let result = {};
 
-    if (!Array.isArray(items) || items.length === 0) {
+    if (!Array.isArray(mapsetIds) || mapsetIds.length === 0) {
         return res.status(400).send('Expected an array of items');
     }
 
     try {
-        for (const item of items) {
-            result[item] = await OsuApi.getMapsetData(item, true);
+        for (const mapsetId of mapsetIds) {
+            result[mapsetId] = await OsuApi.getMapsetData(mapsetId, true);
             //console.log(result[item]);
         }
-        console.log(result);
         res.status(200).json(result);
     } catch (err) {
         console.error("Failed to get data:", err);
         res.status(500).json({ error: "failed to get data" });
+    }
+});
+
+router.get('/api/cachedBeatmapsData', authenticateToken, cachedBeatmapLimiter, async (req, res) => {
+    const beatmapIds = req.query.beatmapsIds ? req.query.beatmapsIds.split(',') : [];
+    let result = {};
+    //console.log('Trying to get cached data to beatmaps\n', beatmapIds);
+    if (!Array.isArray(beatmapIds) || beatmapIds.length === 0) {
+        return res.status(400).send('Expected an array of items');
+    }
+
+    try {
+        for (const beatmapId of beatmapIds) {
+            result[beatmapId] = await OsuApi.tryGetBeatmapDataFromCache(beatmapId);
+            //console.log(result[item]);
+        }
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("Ошибка получения данных:", error);
+        res.status(500).json({ error: "Ошибка получения данных" });
     }
 });
 
@@ -49,18 +68,6 @@ router.post('/api/BeatmapPP/:id', express.json(), authenticateToken, RequestSize
         const calculatedBeatmapData = await OsuApi.getBeatmapData(beatmapId, beatmap);
         res.json(calculatedBeatmapData);
     } catch (error) {
-        res.status(500).json({ error: "Ошибка получения данных" });
-    }
-});
-
-router.get('/api/cachedBeatmapData/:id', authenticateToken, cachedBeatmapLimiter, async (req, res) => {
-    const beatmapId = req.params.id;
-
-    try {
-        const data = await OsuApi.tryGetBeatmapDataFromCache(beatmapId);
-        res.json(data);
-    } catch (error) {
-        console.error("Ошибка получения данных:", error);
         res.status(500).json({ error: "Ошибка получения данных" });
     }
 });
