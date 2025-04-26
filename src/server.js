@@ -9,6 +9,7 @@ const port = 3000;
 const routes = require('./routes');
 const { commandsRunning } = require('./commands/ServerRunningCommandsInterface');
 const OsuApi = require('./services/OsuApi/OsuApiHelper');
+const users = require('$/models/users');
 
 
 app.use(express.json({ limit: '320kb' }));
@@ -49,7 +50,12 @@ const functionCommands = {
     "fake-bm": (amount) => OsuApi.createFakeEntries('beatmap', amount),
 }
 
+const usersCommands = {
+    "users": () => console.log('Список всех пользователей\n', users.getAllUsers(true)),
+}
+
 commandsRunning({
     ...fileCacheCommands,
-    ...functionCommands
+    ...functionCommands,
+    ...usersCommands,
 });

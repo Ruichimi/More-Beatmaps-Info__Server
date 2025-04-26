@@ -6,6 +6,7 @@ const authenticateToken = require('./middlewares/jwt');
 const OsuApi = require('./services/OsuApi/OsuApiHelper');
 const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
+const users = require('$/models/users');
 
 router.get('/', async (req, res) => {
     res.send('Hello World!');
@@ -14,13 +15,12 @@ router.get('/', async (req, res) => {
 router.post('/api/token', tokenLimiter, (req, res) => {
     console.log('Запрос на новый токен');
     const user = { id: uuidv4() };
+    users.addActiveUser(user, req.ip);
     const token = jwt.sign(user, process.env.APP_KEY, { expiresIn: '100h' });
     res.json({ token });
 });
 
 router.get('/api/MapsetsData', authenticateToken, mapsetLimiter, RequestSizeLimit, async (req, res) => {
-    //console.log(req.headers['keep-alive'] || "нету");
-    //return res.json('угабуга');
     const mapsetIds = req.query.mapsetsIds ? req.query.mapsetsIds.split(',') : [];
     let result = {};
 
@@ -33,6 +33,7 @@ router.get('/api/MapsetsData', authenticateToken, mapsetLimiter, RequestSizeLimi
             result[mapsetId] = await OsuApi.getMapsetData(mapsetId, true);
             //console.log(result[item]);
         }
+
         res.status(200).json(result);
     } catch (err) {
         console.error("Failed to get data:", err);

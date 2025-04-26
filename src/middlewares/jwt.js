@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const users = require('$/models/users');
 
 const JWT_SECRET = process.env.APP_KEY;
 const expectedClientId = process.env.EXPECTED_CLIENT_ID;
@@ -22,6 +23,9 @@ function authenticateToken(req, res, next) {
             console.log('Неверный или просроченный токен');
             return res.status(403).json({ error: 'Неверный или просроченный токен' });
         }
+
+        users.addActiveUser(user, req.ip, true);
+        users.incrementRequestsCount(req.ip, req.path);
 
         req.user = user;
         next();
