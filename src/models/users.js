@@ -1,3 +1,5 @@
+const db = require('$/DB.js');
+
 class Users {
     constructor() {
         this.activeUsers = new Map();
@@ -90,6 +92,21 @@ class Users {
         return foundUser;
     }
 
+    async banIP(ip) {
+        console.log(ip);
+        await db.runAsync(`INSERT OR IGNORE INTO banned_ips (ip) VALUES (?)`, [ip]);
+        console.log(`User with id ${ip} has been added to black list`);
+    }
+
+    async unbanIP(ip) {
+        console.log(ip);
+        await db.runAsync(`DELETE FROM banned_ips WHERE ip = ?`, [ip]);
+        console.log(`User with id ${ip} has been removed from the black list`);
+    }
+
+    async getIPFromBlackListIfExist(ip) {
+        return await db.getAsync(`SELECT * FROM banned_ips WHERE ip = ?`, [ip]);
+    }
 }
 
 module.exports = new Users();

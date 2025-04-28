@@ -3,6 +3,7 @@ const router = express.Router();
 const { tokenLimiter, mapsetLimiter, beatmapLimiter, cachedBeatmapLimiter } = require('./middlewares/rateLimiters');
 const RequestSizeLimit = require('./middlewares/RequestSizeLimit');
 const authenticateToken = require('./middlewares/jwt');
+const verifyIPBan = require('./middlewares/verifyIPBan');
 const OsuApi = require('./services/OsuApi/OsuApiHelper');
 const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
@@ -20,7 +21,7 @@ router.post('/api/token', tokenLimiter, (req, res) => {
     res.json({ token });
 });
 
-router.get('/api/MapsetsData', authenticateToken, mapsetLimiter, RequestSizeLimit, async (req, res) => {
+router.get('/api/MapsetsData', mapsetLimiter, verifyIPBan, RequestSizeLimit, async (req, res) => {
     const mapsetIds = req.query.mapsetsIds ? req.query.mapsetsIds.split(',') : [];
     let result = {};
 

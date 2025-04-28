@@ -1,4 +1,4 @@
-const db = new (require('$/DB.js'))();
+const db = require('$/DB.js');
 
 class DBCacher {
     async setObject(objectId, object, objectDate, objectType) {

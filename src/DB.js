@@ -18,16 +18,11 @@ class DB {
         this.db.run("PRAGMA journal_mode=WAL;", (err) => {
             if (err) {
                 console.error("Ошибка при установке WAL режима:", err.message);
-            } else {
-                console.log("WAL режим успешно включён");
             }
         });
         this.db.run("PRAGMA synchronous = NORMAL;", (err) => {
             if (err) {
                 console.error("Ошибка при установке synchronous = NORMAL:", err.message);
-            }
-            else {
-                console.log("Слабая синхронизация установлена");
             }
         });
         this.getAsync = promisify(this.db.get).bind(this.db);
@@ -50,20 +45,26 @@ class DB {
                  data       TEXT    NOT NULL,
                  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
              );`,
-                `CREATE TABLE IF NOT EXISTS mapsets_archive
-                 (
-                     id         INTEGER PRIMARY KEY,
-                     data       TEXT    NOT NULL,
-                     created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
-                     deleted_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
-                 );`,
+            `CREATE TABLE IF NOT EXISTS mapsets_archive
+             (
+                 id         INTEGER PRIMARY KEY,
+                 data       TEXT    NOT NULL,
+                 created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+                 deleted_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+             );`,
             `CREATE TABLE IF NOT EXISTS beatmaps_archive
              (
                  id         INTEGER PRIMARY KEY,
                  data       TEXT    NOT NULL,
                  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
                  deleted_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
-             );`
+             );`,
+             `CREATE TABLE IF NOT EXISTS banned_ips
+              (
+                  id         INTEGER PRIMARY KEY AUTOINCREMENT ,
+                  ip       TEXT    NOT NULL,
+                  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+              );`
         ];
 
         queries.forEach((query) => {
@@ -89,4 +90,4 @@ class DB {
     // }
 }
 
-module.exports = DB;
+module.exports = new DB();
