@@ -5,39 +5,54 @@ class Users {
         this.activeUsers = new Map();
     }
 
-    incrementRequestsCount(userIP, requestUrl) {
+    registerUsersUrl(userIP, requestUrl) {
+        const requestPath = requestUrl.split('?')[0];
+        const endPointName = requestPath.split('api/')[1];
         const user = this.getUserByIP(userIP);
 
-        if (!user.requestsCounts[requestUrl]) {
-            user.requestsCounts[requestUrl] = 1;
+        this.addUserRequestUrl(user, requestUrl);
+        this.incrementUserRequestsCount(user, endPointName);
+    }
+
+    addUserRequestUrl(user, requestUrl) {
+        user.lastRequestsUrls.unshift(requestUrl);
+        if (user.lastRequestsUrls.length > 10) {
+            user.lastRequestsUrls.pop();
+        }
+    }
+
+    incrementUserRequestsCount(user, endPointName) {
+        if (!user.requestsCounts[endPointName]) {
+            user.requestsCounts[endPointName] = 1;
         } else {
-            user.requestsCounts[requestUrl]++;
+            user.requestsCounts[endPointName]++;
         }
     }
 
     addActiveUser(user, clientIP, replaceIfExist = false) {
         if (replaceIfExist) {
             if (this.getUserByIP(clientIP)) {
-                return console.log(`User with id ${user.id} already exists`);
+                //console.log(`User with id ${user.id} already exists`)
+                return;
             }
         }
 
-        if (!user.requestsCounts) {
-            user.requestsCounts = {};
-        }
+        if (!user.requestsCounts) user.requestsCounts = {};
+        if (!user.lastRequestsUrls) user.lastRequestsUrls = [];
+
         user.clientIP = clientIP;
 
         this.activeUsers.set(clientIP, user);
     }
 
-    getAllUsers(formated = false) {
+    getAllUsers(raw = false) {
         const users = [];
 
         for (const user of this.activeUsers.values()) {
-            if (formated) {
-                users.push(this.formatUser(user));
-            } else {
+            if (raw) {
                 users.push(user);
+            } else {
+                users.push(this.formatUser(user));
             }
         }
 

@@ -1,19 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const { tokenLimiter, mapsetLimiter, beatmapLimiter, cachedBeatmapLimiter } = require('./middlewares/rateLimiters');
-const RequestSizeLimit = require('./middlewares/RequestSizeLimit');
-const authenticateToken = require('./middlewares/jwt');
-const verifyIPBan = require('./middlewares/verifyIPBan');
 const OsuApi = require('./services/OsuApi/OsuApiHelper');
 const { v4: uuidv4 } = require('uuid');
+
 const jwt = require('jsonwebtoken');
 const users = require('$/models/users');
 
-router.get('/', async (req, res) => {
-    res.send('Hello World!');
-});
+const requestLimit = require('./middlewares/rateLimiters');
+const RequestSizeLimit = require('./middlewares/RequestSizeLimit');
+const authenticateToken = require('./middlewares/jwt');
+const verifyIPBan = require('./middlewares/verifyIPBan');
 
-router.post('/api/token', tokenLimiter, (req, res) => {
+router.post('/api/token', requestLimit(10, 60), (req, res) => {
     console.log('Запрос на новый токен');
     const user = { id: uuidv4() };
     users.addActiveUser(user, req.ip);
@@ -21,7 +19,7 @@ router.post('/api/token', tokenLimiter, (req, res) => {
     res.json({ token });
 });
 
-router.get('/api/MapsetsData', mapsetLimiter, verifyIPBan, RequestSizeLimit, async (req, res) => {
+router.get('/api/MapsetsData', verifyIPBan, requestLimit(200, 60), authenticateToken, async (req, res) => {
     const mapsetIds = req.query.mapsetsIds ? req.query.mapsetsIds.split(',') : [];
     let result = {};
 
@@ -42,7 +40,7 @@ router.get('/api/MapsetsData', mapsetLimiter, verifyIPBan, RequestSizeLimit, asy
     }
 });
 
-router.get('/api/cachedBeatmapsData', authenticateToken, cachedBeatmapLimiter, async (req, res) => {
+router.get('/api/cachedBeatmapsData', verifyIPBan, requestLimit(200, 60), authenticateToken, async (req, res) => {
     const beatmapIds = req.query.beatmapsIds ? req.query.beatmapsIds.split(',') : [];
     let result = {};
     //console.log('Trying to get cached data to beatmaps\n', beatmapIds);
@@ -62,7 +60,7 @@ router.get('/api/cachedBeatmapsData', authenticateToken, cachedBeatmapLimiter, a
     }
 });
 
-router.post('/api/BeatmapPP/:id', express.json(), authenticateToken, RequestSizeLimit, beatmapLimiter, async (req, res) => {
+router.post('/api/BeatmapPP/:id', express.json(), verifyIPBan, requestLimit(15, 60), authenticateToken, RequestSizeLimit, async (req, res) => {
     const { id: beatmapId } = req.params;
 
     const { beatmap } = req.body;
@@ -70,17 +68,6 @@ router.post('/api/BeatmapPP/:id', express.json(), authenticateToken, RequestSize
         const calculatedBeatmapData = await OsuApi.getBeatmapData(beatmapId, beatmap);
         res.json(calculatedBeatmapData);
     } catch (error) {
-        res.status(500).json({ error: "Ошибка получения данных" });
-    }
-});
-
-router.get('/api/BeatmapData/:id', authenticateToken, RequestSizeLimit, async (req, res) => {
-    const beatmapId = req.params.id;
-    try {
-        const data = await OsuApi.getBeatmapData(beatmapId);
-        res.json(data);
-    } catch (error) {
-        console.error("Ошибка получения данных:", error);
         res.status(500).json({ error: "Ошибка получения данных" });
     }
 });

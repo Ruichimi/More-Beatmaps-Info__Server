@@ -51,7 +51,7 @@ const functionCommands = {
 }
 
 const usersCommands = {
-    "users": () => console.log('Список всех пользователей\n', users.getAllUsers(true)),
+    "users": (raw) => console.log('Список всех пользователей\n', users.getAllUsers(raw)),
     "ban-ip": (ip) => users.banIP(ip),
     "unban-ip": (ip) => users.unbanIP(ip),
 }
