@@ -43,7 +43,7 @@ class DBCacher {
                     const row = rows.pop();
                     idsToDelete.push(row.id);
                 }
-
+                console.log(idsToDelete);
                 await this.deleteEntriesByIds(tableName, idsToDelete);
 
                 console.log(`Удалено ${idsToDelete.length} записей из таблицы ${tableName}`);
@@ -126,4 +126,4 @@ class DBCacher {
     }
 }
 
-module.exports = DBCacher;
+module.exports = new DBCacher();

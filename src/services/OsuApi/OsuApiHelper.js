@@ -12,7 +12,7 @@ class OsuApiHelper extends CacheManager {
         this.accessToken = null;
     }
 
-    getMapsetData = async (mapsetId) => {
+    getMapsetData = async (mapsetId, registerInBDIf404 = false) => {
         try {
             const cachedBeatmapset = await this.getObject(mapsetId, 'beatmapset');
             if (cachedBeatmapset) {
@@ -26,7 +26,12 @@ class OsuApiHelper extends CacheManager {
             this.setBeatmapset(filteredMapset);
             return filteredMapset;
         } catch (err) {
-            console.error(err.message);
+            if (err.message.includes('404')) {
+                if (registerInBDIf404) {
+                    this.registerEmptyBeatmapset(mapsetId);
+                }
+            }
+
             return null;
         }
     }

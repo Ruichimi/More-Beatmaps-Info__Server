@@ -9,6 +9,7 @@ const port = 3000;
 const routes = require('./routes');
 const { commandsRunning } = require('./commands/ServerRunningCommandsInterface');
 const OsuApi = require('./services/OsuApi/OsuApiHelper');
+const BeatmapsLoader = require('./services/OsuApi/BeatmapsLoader');
 const users = require('$/models/users');
 
 
@@ -48,6 +49,8 @@ const functionCommands = {
 
     "fake-bs": (amount) => OsuApi.createFakeEntries('beatmapset', amount),
     "fake-bm": (amount) => OsuApi.createFakeEntries('beatmap', amount),
+
+    "fetch-bss": (timeInMinutes, startId) => BeatmapsLoader.startFetching(timeInMinutes, startId)
 }
 
 const usersCommands = {

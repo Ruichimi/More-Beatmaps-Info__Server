@@ -1,15 +1,14 @@
-const FileCacher = require("./DBCacher");
 const BeatmapsFilter = require('../BeatmapsFilter');
-const dataBase = new FileCacher;
+const dataBase = require("./DBCacher");
 const fake = require('$/services/FakeRecordsMaker.js');
 
 class CacheManager {
     constructor() {
         //An IDE may show these variables as unused due to indirect usage. Preventing via comments.
         //noinspection JSUnusedGlobalSymbols
-        this.beatmapsetsCacheLimit = 10;
+        this.beatmapsetsCacheLimit = 2500000;
         //noinspection JSUnusedGlobalSymbols
-        this.beatmapsetsCacheCleanItems = 5;
+        this.beatmapsetsCacheCleanItems = 1000000;
         //noinspection JSUnusedGlobalSymbols
         this.beatmapsCacheLimit = 30000;
         //noinspection JSUnusedGlobalSymbols
@@ -30,22 +29,28 @@ class CacheManager {
         this.#setObject(mapsetData, 'beatmapset');
     }
 
+    async registerEmptyBeatmapset(mapsetId) {
+        await this.#setObject({id: mapsetId, data: 'empty'}, 'beatmapset');
+        console.log(`successfully set ${mapsetId} as empty beatmapset`);
+    }
+
     setBeatmap(beatmapData) {
         let filteredBeatmapData = BeatmapsFilter.filterBeatmap(beatmapData);
         this.#setObject(filteredBeatmapData, 'beatmap');
     }
 
-    #setObject(object, objectType) {
+    async #setObject(object, objectType) {
         try {
             const objectSizeLimit = this[`${objectType}sCacheLimit`];
+            console.log(objectSizeLimit, await dataBase.getObjectCount(objectType));
 
-            if (objectSizeLimit >= dataBase.getObjectCount(objectType)) {
-                this.cleanItemsAmount(objectType);
+            if (await dataBase.getObjectCount(objectType) + 1 >= objectSizeLimit) {
+                await this.cleanItemsAmount(objectType);
             }
 
             const objectId = String(object.id);
 
-            dataBase.setObject(objectId, object,  Date.now(), objectType);
+            await dataBase.setObject(objectId, object,  Date.now(), objectType);
         } catch(err) {
             throw new Error(`Failed to cache ${objectType} \n${err.message}`);
         }

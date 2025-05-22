@@ -29,7 +29,7 @@ router.get('/api/MapsetsData', verifyIPBan, requestLimit(200, 60), authenticateT
 
     try {
         for (const mapsetId of mapsetIds) {
-            result[mapsetId] = await OsuApi.getMapsetData(mapsetId, true);
+            result[mapsetId] = await OsuApi.getMapsetData(mapsetId);
             //console.log(result[item]);
         }
 
