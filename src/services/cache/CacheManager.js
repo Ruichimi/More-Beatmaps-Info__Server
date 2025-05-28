@@ -25,6 +25,11 @@ class CacheManager {
         }
     }
 
+    async removeObjectById(objectId, tableName) {
+        await dataBase.deleteEntriesByIds(tableName, [objectId], false);
+        console.log(`successfully removed ${objectId} from ${tableName} cache`);
+    }
+
     setBeatmapset(mapsetData) {
         this.#setObject(mapsetData, 'beatmapset');
     }

@@ -72,4 +72,25 @@ router.post('/api/BeatmapPP/:id', express.json(), verifyIPBan, requestLimit(15, 
     }
 });
 
+router.post('/api/updateMapset/:id', verifyIPBan, requestLimit(2, 60), authenticateToken, async (req, res) => {
+    try {
+        const mapsetId = req.params.id;
+        const mapsetData = await OsuApi.getObject(mapsetId, 'beatmapset');
+        if (!mapsetData) {
+            res.status(400).json({ message: 'Invalid id' });
+            return;
+        }
+        for (const beatmap of mapsetData.beatmaps) {
+            await OsuApi.removeObjectById(beatmap.id, 'beatmaps');
+        }
+        await OsuApi.removeObjectById(mapsetId, 'mapsets');
+
+        const updatedMapset = await OsuApi.getMapsetData(mapsetId);
+        res.status(200).json(updatedMapset);
+    } catch (error) {
+        console.error('Failed to remove mapset:', error);
+        res.status(500).json({ error: 'Failed to remove mapset' });
+    }
+});
+
 module.exports = router;

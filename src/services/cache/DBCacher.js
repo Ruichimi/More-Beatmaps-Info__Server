@@ -5,7 +5,7 @@ class DBCacher {
         try {
             const tableName = this.getTableNameByObjectType(objectType);
             await db.runAsync(`INSERT OR IGNORE INTO ${tableName} (id, data, created_at)
-                           VALUES (?, ?, ?)`, [objectId, JSON.stringify(object), objectDate]);
+                               VALUES (?, ?, ?)`, [objectId, JSON.stringify(object), objectDate]);
 
             console.log(`Loaded beatmap ${objectId} to DB`);
         } catch (err) {
@@ -61,15 +61,18 @@ class DBCacher {
             LIMIT ?`, [limit]);
     }
 
-    async deleteEntriesByIds(tableName, ids) {
-        const deletedTableName = `${tableName}_archive`;
+    async deleteEntriesByIds(tableName, ids, saveToArchive = true) {
+        if (saveToArchive) {
+            const deletedTableName = `${tableName}_archive`;
 
-        await db.runAsync(`
-            INSERT OR IGNORE INTO ${deletedTableName} (id, data, created_at, deleted_at)
-            SELECT id, data, created_at, strftime('%s', 'now')
-            FROM ${tableName}
-            WHERE id IN (${ids.join(',')})
-        `);
+            await db.runAsync(`
+                INSERT OR IGNORE INTO ${deletedTableName} (id, data, created_at, deleted_at)
+                SELECT id, data, created_at, strftime('%s', 'now')
+                FROM ${tableName}
+                WHERE id IN (${ids.join(',')})
+            `);
+        }
+
 
         await db.runAsync(`
             DELETE
@@ -121,7 +124,8 @@ class DBCacher {
 
     async cleanObjectArchive(objectType) {
         const tableName = `${this.getTableNameByObjectType(objectType)}_archive`;
-        await db.runAsync(`DELETE FROM ${tableName}`);
+        await db.runAsync(`DELETE
+                           FROM ${tableName}`);
         return true;
     }
 }
