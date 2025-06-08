@@ -29,27 +29,29 @@ class BeatmapsLoader {
     }
 
     async startFetching(amountToFetch, startId) {
-        let id = startId;
         let fetchedCount = 0;
 
         while (fetchedCount < amountToFetch) {
-            const cachedId = await OsuApi.getObject(id, 'beatmapset');
-
-            if (!cachedId) {
-                if (this.requestsThisMinute.count >= this.requestsLimit) {
-                    await this.waitForRequestsThisMinuteReset();
-                }
-
-                this.requestsThisMinute.count++;
-                const res = await OsuApi.getMapsetData(id, true);
-                console.log('🎵 Получена карта', id, res);
-                fetchedCount++;
-            }
-
-            id++;
+            await this.fetchBeatmapset(startId);
+            fetchedCount++;
+            startId++;
         }
 
         console.log(`✅ Получено ${fetchedCount} карт, фетчинг завершён.`);
+    }
+
+    async fetchBeatmapset(id) {
+        const cachedId = await OsuApi.getObject(id, 'beatmapset');
+
+        if (!cachedId) {
+            if (this.requestsThisMinute.count >= this.requestsLimit) {
+                await this.waitForRequestsThisMinuteReset();
+            }
+
+            this.requestsThisMinute.count++;
+            const res = await OsuApi.getMapsetData(id, true);
+            console.log('🎵 Получена карта', id, res);
+        }
     }
 }
 

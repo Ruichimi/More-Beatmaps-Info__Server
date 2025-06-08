@@ -7,7 +7,7 @@ class DBCacher {
             await db.runAsync(`INSERT OR IGNORE INTO ${tableName} (id, data, created_at)
                                VALUES (?, ?, ?)`, [objectId, JSON.stringify(object), objectDate]);
 
-            console.log(`Loaded beatmap ${objectId} to DB`);
+            //console.log(`Loaded beatmap ${objectId} to DB`);
         } catch (err) {
             throw new Error(`Failed to append data: ${err.message}`);
         }

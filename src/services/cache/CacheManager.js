@@ -6,7 +6,7 @@ class CacheManager {
     constructor() {
         //An IDE may show these variables as unused due to indirect usage. Preventing via comments.
         //noinspection JSUnusedGlobalSymbols
-        this.beatmapsetsCacheLimit = 2500000;
+        this.beatmapsetsCacheLimit = 3000000;
         //noinspection JSUnusedGlobalSymbols
         this.beatmapsetsCacheCleanItems = 1000000;
         //noinspection JSUnusedGlobalSymbols
@@ -47,7 +47,6 @@ class CacheManager {
     async #setObject(object, objectType) {
         try {
             const objectSizeLimit = this[`${objectType}sCacheLimit`];
-            console.log(objectSizeLimit, await dataBase.getObjectCount(objectType));
 
             if (await dataBase.getObjectCount(objectType) + 1 >= objectSizeLimit) {
                 await this.cleanItemsAmount(objectType);
@@ -56,6 +55,8 @@ class CacheManager {
             const objectId = String(object.id);
 
             await dataBase.setObject(objectId, object,  Date.now(), objectType);
+            // !This log should be removed before release due to extra DB queries
+            console.log(`${objectType} ${object.id} загруженна в BD`, await dataBase.getObjectCount(objectType));
         } catch(err) {
             throw new Error(`Failed to cache ${objectType} \n${err.message}`);
         }
