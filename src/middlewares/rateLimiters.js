@@ -4,7 +4,7 @@ const requestsLimit = (count, resetSec) => {
     return rateLimit({
         windowMs: resetSec * 1000,
         max: count,
-        message: { error: "Слишком много запросов. Попробуйте позже." }
+        message: { error: "Too many requests, please try again later" }
     });
 }
 

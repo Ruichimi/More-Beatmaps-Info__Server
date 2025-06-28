@@ -32,7 +32,7 @@ const fileCacheCommands = {
     "size-bs": async () => console.log('Размер долгого кеша (beatmapset):',
         await OsuApi.getCacheSize('beatmapset')),
 
-    "size-bm": async () => console.log('Размер долгого кеша (beatmapset):',
+    "size-bm": async () => console.log('Размер долгого кеша (beatmap):',
         await OsuApi.getCacheSize('beatmap')),
 
     "bs": (id) => OsuApi.getObjectByIdFromDB(id, 'beatmapset'),

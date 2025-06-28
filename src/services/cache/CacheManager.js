@@ -10,9 +10,9 @@ class CacheManager {
         //noinspection JSUnusedGlobalSymbols
         this.beatmapsetsCacheCleanItems = 1000000;
         //noinspection JSUnusedGlobalSymbols
-        this.beatmapsCacheLimit = 30000;
+        this.beatmapsCacheLimit = 1000000;
         //noinspection JSUnusedGlobalSymbols
-        this.beatmapsCacheCleanItems = 20000;
+        this.beatmapsCacheCleanItems = 700000;
     }
 
     async getObject(objectId, objectType) {
