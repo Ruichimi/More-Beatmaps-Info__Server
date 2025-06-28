@@ -80,9 +80,13 @@ router.post('/api/updateMapset/:id', verifyIPBan, requestLimit(2, 60), authentic
             res.status(400).json({ message: 'Invalid id' });
             return;
         }
-        for (const beatmap of mapsetData.beatmaps) {
-            await OsuApi.removeObjectById(beatmap.id, 'beatmaps');
+
+        if (mapsetData.beatmaps) {
+            for (const beatmap of mapsetData.beatmaps) {
+                await OsuApi.removeObjectById(beatmap.id, 'beatmaps');
+            }
         }
+
         await OsuApi.removeObjectById(mapsetId, 'mapsets');
 
         const updatedMapset = await OsuApi.getMapsetData(mapsetId);
