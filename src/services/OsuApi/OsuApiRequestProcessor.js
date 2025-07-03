@@ -13,7 +13,7 @@ class OsuApiRequestProcessor {
         this.readyToRequests = this.initOsuApi();
         this.showRequestsTime = false;
 
-        this.rateLimitMin = 250;
+        this.rateLimitMin = 60;
         this.requestsThisMinute = 0;
 
         this.resetIsSoon = false;
@@ -26,16 +26,28 @@ class OsuApiRequestProcessor {
      * Schedules periodic reset of the request counter.
      * Reset happens every 60 seconds with a warning flag after 50 seconds.
      */
-    scheduleRequestsReset() {
-        setInterval(() => {
+    scheduleRequestsReset(logging = false) {
+        const getTime = () => {
+            const now = new Date();
+            return now.toTimeString().split(' ')[0];
+        };
+
+        const resetRequestsCountIn60sec = () => {
             setTimeout(() => {
-                this.requestsThisMinute = 0;
-                this.resetIsSoon = false;
-            }, 10000);
-            //console.log('Ресет скоро');
-            this.resetIsSoon = true;
-        }, 5000);
+                setTimeout(() => {
+                    resetRequestsCountIn60sec();
+                    if (logging) console.log(`[${getTime()}] Schedule requests reset`);
+                    this.requestsThisMinute = 0;
+                    this.resetIsSoon = false;
+                }, 10000);
+                if (logging) console.log(`[${getTime()}] The reset will be soon`);
+                this.resetIsSoon = true;
+            }, 50000);
+        }
+
+        resetRequestsCountIn60sec();
     }
+
 
     /**
      * Initializes the osu! API instance.
