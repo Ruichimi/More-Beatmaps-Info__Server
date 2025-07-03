@@ -11,7 +11,7 @@ const RequestSizeLimit = require('./middlewares/RequestSizeLimit');
 const authenticateToken = require('./middlewares/jwt');
 const verifyIPBan = require('./middlewares/verifyIPBan');
 
-router.get('/', requestLimit(7, 60) (req, res) => {
+router.get('/', requestLimit(7, 60), (req, res) => {
   res.send('Hi! This is MBI 🌸');
 });
 
