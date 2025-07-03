@@ -7,7 +7,7 @@ class Users {
 
     registerUsersUrl(userIP, requestUrl) {
         const requestPath = requestUrl.split('?')[0];
-        const endPointName = requestPath.split('api/')[1];
+        const endPointName = requestPath.split('/')[2];
         const user = this.getUserByIP(userIP);
 
         this.addUserRequestUrl(user, requestUrl);

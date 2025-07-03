@@ -25,7 +25,6 @@ function authenticateToken(req, res, next) {
         }
 
         users.addActiveUser(user, req.ip, true);
-        console.log(req.url);
         users.registerUsersUrl(req.ip, req.url);
 
         req.user = user;
