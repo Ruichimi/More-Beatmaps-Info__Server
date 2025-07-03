@@ -12,6 +12,7 @@ const OsuApi = require('./services/OsuApi/OsuApiHelper');
 const BeatmapsLoader = require('./services/OsuApi/BeatmapsLoader');
 const users = require('$/models/users');
 
+app.set('trust proxy', 1);
 app.use(express.json({ limit: '320kb' }));
 
 const corsOptions = {
@@ -23,7 +24,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(routes);
 
-app.listen(port, '0.0.0.0', async () => {
+app.listen(port, '127.0.0.1', async () => {
     console.log(`Сервер запущен на http://localhost:${port}`);
 });
 
