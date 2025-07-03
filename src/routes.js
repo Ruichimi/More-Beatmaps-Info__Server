@@ -11,6 +11,10 @@ const RequestSizeLimit = require('./middlewares/RequestSizeLimit');
 const authenticateToken = require('./middlewares/jwt');
 const verifyIPBan = require('./middlewares/verifyIPBan');
 
+router.get('/', requestLimit(7, 60), (req, res) => {
+  res.send('Hi! This is MBI 🌸');
+});
+
 router.post('/api/token', requestLimit(10, 60), (req, res) => {
     console.log('Запрос на новый токен');
     const user = { id: uuidv4() };

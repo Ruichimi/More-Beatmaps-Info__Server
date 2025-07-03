@@ -7,3 +7,4 @@ beatmapsetsCache.json
 database.db
 database.db-shm
 database.db-wal
+database_backup.db
