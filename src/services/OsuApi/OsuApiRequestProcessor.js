@@ -15,7 +15,7 @@ class OsuApiRequestProcessor {
 
         this.showRequestsTime = false;
 
-        this.rateLimitMin = 10;
+        this.rateLimitMin = 60;
         this.requestsThisMinute = 0;
 
         this.resetIsSoon = false;
