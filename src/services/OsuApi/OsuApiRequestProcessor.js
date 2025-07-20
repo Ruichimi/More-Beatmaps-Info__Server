@@ -10,10 +10,12 @@ const osuApi = new OsuApiRequestMaker();
  */
 class OsuApiRequestProcessor {
     constructor() {
-        this.readyToRequests = this.initOsuApi();
+        this.readyToRequests = false;
+        this.initOsuApi();
+
         this.showRequestsTime = false;
 
-        this.rateLimitMin = 60;
+        this.rateLimitMin = 10;
         this.requestsThisMinute = 0;
 
         this.resetIsSoon = false;
@@ -27,38 +29,42 @@ class OsuApiRequestProcessor {
      * Reset happens every 60 seconds with a warning flag after 50 seconds.
      */
     scheduleRequestsReset(logging = false) {
-        const getTime = () => {
-            const now = new Date();
-            return now.toTimeString().split(' ')[0];
-        };
+        if (this._resetTimeout1) clearTimeout(this._resetTimeout1);
+        if (this._resetTimeout2) clearTimeout(this._resetTimeout2);
 
-        const resetRequestsCountIn60sec = () => {
-            setTimeout(() => {
-                setTimeout(() => {
-                    resetRequestsCountIn60sec();
-                    if (logging) console.log(`[${getTime()}] Schedule requests reset`);
-                    this.requestsThisMinute = 0;
-                    this.resetIsSoon = false;
-                }, 10000);
-                if (logging) console.log(`[${getTime()}] The reset will be soon`);
-                this.resetIsSoon = true;
-            }, 50000);
-        }
+        this._resetTimeout1 = setTimeout(() => {
+            if (logging) console.log(`[${getTime()}] The reset will be soon`);
+            this.resetIsSoon = true;
 
-        resetRequestsCountIn60sec();
+            this._resetTimeout2 = setTimeout(() => {
+                if (logging) console.log(`[${getTime()}] Schedule requests reset`);
+                this.requestsThisMinute = 0;
+                this.resetIsSoon = false;
+
+            }, 10000);
+        }, 50000);
     }
 
-
     /**
-     * Initializes the osu! API instance.
+     * Initializes the osu! API instance and resets it every 24 hours to keep the API key fresh.
      * @returns {Promise<void>}
      */
     async initOsuApi() {
-        return osuApi.init().then(() => {
-            this.scheduleRequestsReset();
-            console.log('Osu api processor initialized');
-            this.readyToRequests = true;
-        });
+        const init = () => {
+            osuApi.init().then(() => {
+                this.scheduleRequestsReset();
+                console.log(`[${getTime()}] Osu api processor initialized`);
+                this.readyToRequests = true;
+            });
+        }
+
+        init();
+
+        setInterval(() => {
+            console.log(this.readyToRequests);
+            this.readyToRequests = false;
+            init();
+        }, 24 * 60 * 60 * 1000); // 24 hours
     }
 
     /**
@@ -126,8 +132,7 @@ class OsuApiRequestProcessor {
             }
 
             return beatmapData;
-        }
-        catch (error) {
+        } catch (error) {
             this.requestQueue.delete(mapsetId);
             throw error;
         }

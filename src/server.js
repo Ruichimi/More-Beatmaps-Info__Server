@@ -15,6 +15,11 @@ const users = require('$/models/users');
 app.set('trust proxy', 1);
 app.use(express.json({ limit: '320kb' }));
 
+global.getTime = () => {
+    const now = new Date();
+    return now.toTimeString().split(' ')[0];
+};
+
 const corsOptions = {
     origin: '*',
     methods: ['GET', 'POST'],
@@ -24,8 +29,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(routes);
 
+//127.0.0.1
 app.listen(port, '127.0.0.1', async () => {
-    console.log(`Сервер запущен на http://localhost:${port}`);
+    console.log(`The server is running on port ${port}`);
 });
 
 const fileCacheCommands = {
