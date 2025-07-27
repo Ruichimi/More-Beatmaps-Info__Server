@@ -1,14 +1,35 @@
 const db = require('$/DB.js');
 
+/**
+ * This class is designed to monitor clients using the server
+ * in order to detect potential DDoS attacks and block suspicious IP addresses.
+ *
+ * It keeps track of active clients during the current session
+ * using the `activeUsers` property and provides tools for monitoring and blocking.
+ *
+ * Collected data: the client's IP address and the URL of the requested route.
+ * This data is stored only in RAM for the duration of a single session,
+ * is not transmitted elsewhere, and is accessible only to the server administrator.
+ * It's applies to the entire project.
+ *
+ * Exception: IP addresses manually blocked by the administrator due to DDoS activity
+ * are stored in a database to prevent repeated attempts until they are unblocked.
+ */
 class Users {
     constructor() {
         this.activeUsers = new Map();
+        this.sessionIdCounter = 1;
     }
 
-    registerUsersUrl(userIP, requestUrl) {
+    trackClient(user, clientIP, requestUrl) {
+        this.addActiveUser(user, clientIP, true);
+        this.registerUsersUrl(clientIP, requestUrl);
+    }
+
+    registerUsersUrl(clientIP, requestUrl) {
         const requestPath = requestUrl.split('?')[0];
         const endPointName = requestPath.split('/')[2];
-        const user = this.getUserByIP(userIP);
+        const user = this.getUserByIP(clientIP);
 
         this.addUserRequestUrl(user, requestUrl);
         this.incrementUserRequestsCount(user, endPointName);
@@ -29,8 +50,8 @@ class Users {
         }
     }
 
-    addActiveUser(user, clientIP, replaceIfExist = false) {
-        if (replaceIfExist) {
+    addActiveUser(user, clientIP, skipIfExists = false) {
+        if (skipIfExists) {
             if (this.getUserByIP(clientIP)) {
                 //console.log(`User with id ${user.id} already exists`)
                 return;
@@ -42,8 +63,13 @@ class Users {
 
         user.clientIP = clientIP;
 
+        if (!user.sessionId) {
+            user.sessionId = this.sessionIdCounter++;
+        }
+
         this.activeUsers.set(clientIP, user);
     }
+
 
     getAllUsers(raw = false) {
         const users = [];
@@ -52,7 +78,7 @@ class Users {
             if (raw) {
                 users.push(user);
             } else {
-                users.push(this.formatUser(user));
+                users.push(`${user.sessionId}: Requests: [ ${this.formatRequestsCounts(user.requestsCounts)} ]`);
             }
         }
 
@@ -61,27 +87,37 @@ class Users {
 
     formatUser(user) {
         const formatedUser = {};
+
         formatedUser.id = user.id;
         formatedUser.ExperationAt = new Date(user.exp * 1000).toLocaleString();
         formatedUser.IssuedAt = new Date(user.iat * 1000).toLocaleString();
-
-        let requestsCountsString = '';
-        for (const [url, count] of Object.entries(user.requestsCounts)) {
-            requestsCountsString += `${url}: ${count}, `;
-        }
-
-        requestsCountsString = requestsCountsString.slice(0, -2);
-
-        formatedUser.requestsCounts = requestsCountsString;
+        formatedUser.requestsCounts = this.formatRequestsCounts(user.requestsCounts);
 
         const result = {};
-        result[user.clientIP] = formatedUser;
+        result[user.sessionId] = formatedUser;
 
         return result;
     }
 
+    formatRequestsCounts(requestsCounts) {
+        return Object.entries(requestsCounts)
+            .map(([url, count]) => `${url}: ${count}`)
+            .join(', ');
+    }
+
+
+    getUserByIdCounterOrIP(userIdentificator, formated = false) {
+        if (userIdentificator.includes('.')) {
+            return this.getUserByIP(userIdentificator, formated);
+        } else {
+            return this.getUserBySessionId(Number(userIdentificator), formated);
+        }
+    }
+
     getUserByIP(ip, formated = false) {
         const user = this.activeUsers.get(ip);
+
+        if (!user) return null;
 
         if (formated) {
             return this.formatUser(user);
@@ -89,10 +125,10 @@ class Users {
         return user;
     }
 
-    getUserByID(id, formated = false) {
+    getUserBySessionId(sessionId, formated = false) {
         let foundUser = null;
         for (const user of this.activeUsers.values()) {
-            if (user.id === id) {
+            if (user.sessionId === sessionId) {
                 foundUser = user;
                 break;
             }
@@ -108,13 +144,11 @@ class Users {
     }
 
     async banIP(ip) {
-        console.log(ip);
         await db.runAsync(`INSERT OR IGNORE INTO banned_ips (ip) VALUES (?)`, [ip]);
         console.log(`User with id ${ip} has been added to black list`);
     }
 
     async unbanIP(ip) {
-        console.log(ip);
         await db.runAsync(`DELETE FROM banned_ips WHERE ip = ?`, [ip]);
         console.log(`User with id ${ip} has been removed from the black list`);
     }

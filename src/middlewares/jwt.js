@@ -24,8 +24,7 @@ function authenticateToken(req, res, next) {
             return res.status(403).json({ error: 'Неверный или просроченный токен' });
         }
 
-        users.addActiveUser(user, req.ip, true);
-        users.registerUsersUrl(req.ip, req.url);
+        users.trackClient(user, req.ip, req.url);
 
         req.user = user;
         next();
