@@ -10,12 +10,11 @@ const osuApi = new OsuApiRequestMaker();
  */
 class OsuApiRequestProcessor {
     constructor() {
-        this.readyToRequests = false;
-        this.initOsuApi();
+        this.initOsuApiInterval();
 
-        this.showRequestsTime = false;
+        this.logging = false;
 
-        this.rateLimitMin = 60;
+        this.rateLimitMin = process.env.OSU_API_RATE_LIMIT_MIN;
         this.requestsThisMinute = 0;
 
         this.resetIsSoon = false;
@@ -28,16 +27,16 @@ class OsuApiRequestProcessor {
      * Schedules periodic reset of the request counter.
      * Reset happens every 60 seconds with a warning flag after 50 seconds.
      */
-    scheduleRequestsReset(logging = false) {
-        if (this._resetTimeout1) clearTimeout(this._resetTimeout1);
+    scheduleRequestsReset() {
+        if (this._resetTimeout1) clearInterval(this._resetTimeout1);
         if (this._resetTimeout2) clearTimeout(this._resetTimeout2);
 
-        this._resetTimeout1 = setTimeout(() => {
-            if (logging) console.log(`[${getTime()}] The reset will be soon`);
+        this._resetTimeout1 = setInterval(() => {
+            if (this.logging) console.log(`[${getTime()}] The reset will be soon`);
             this.resetIsSoon = true;
 
             this._resetTimeout2 = setTimeout(() => {
-                if (logging) console.log(`[${getTime()}] Schedule requests reset`);
+                if (this.logging) console.log(`[${getTime()}] Schedule requests reset`);
                 this.requestsThisMinute = 0;
                 this.resetIsSoon = false;
 
@@ -49,22 +48,19 @@ class OsuApiRequestProcessor {
      * Initializes the osu! API instance and resets it every 24 hours to keep the API key fresh.
      * @returns {Promise<void>}
      */
-    async initOsuApi() {
-        const init = () => {
-            osuApi.init().then(() => {
-                this.scheduleRequestsReset();
-                console.log(`[${getTime()}] Osu api processor initialized`);
-                this.readyToRequests = true;
-            });
-        }
-
-        init();
+    async initOsuApiInterval() {
+        this.initOsuApi();
 
         setInterval(() => {
-            console.log(this.readyToRequests);
-            this.readyToRequests = false;
-            init();
+            this.initOsuApi();
         }, 24 * 60 * 60 * 1000); // 24 hours
+    }
+
+    initOsuApi() {
+        osuApi.init().then(() => {
+            this.scheduleRequestsReset();
+            console.log(`[${getTime()}] Osu api processor initialized`);
+        });
     }
 
     /**
@@ -76,10 +72,6 @@ class OsuApiRequestProcessor {
     async getBeatmapset(mapsetId) {
         if (typeof mapsetId === 'string') {
             mapsetId = Number(mapsetId);
-        }
-
-        if (this.readyToRequests !== true) {
-            await this.readyToRequests;
         }
 
         this.requestQueue.add(mapsetId);
@@ -102,7 +94,7 @@ class OsuApiRequestProcessor {
     async blockOrKeepRequest(mapsetId) {
         while (this.requestsThisMinute >= this.rateLimitMin) {
             if (this.isPostponeRequestConditionsKeep()) {
-                await new Promise(resolve => setTimeout(resolve, 3000));
+                await new Promise(resolve => setTimeout(resolve, 3000)); // 3s sleep
             } else {
                 this.requestQueue.delete(mapsetId);
                 throw new Error(`Too many requests to osu api. Current limit is ${this.rateLimitMin} per minute`);
@@ -120,13 +112,13 @@ class OsuApiRequestProcessor {
     async makeOsuApiMapsetRequest(mapsetId) {
         try {
             let startTime;
-            if (this.showRequestsTime) startTime = performance.now();
+            if (this.logging) startTime = performance.now();
 
             this.requestsThisMinute++;
 
             const beatmapData = await osuApi.getBeatmapset(mapsetId);
 
-            if (this.showRequestsTime) {
+            if (this.logging) {
                 const endTime = performance.now();
                 console.log(`Время запроса beatmapset ${mapsetId}: ${(endTime - startTime).toFixed(2)} мс`);
             }
