@@ -20,7 +20,6 @@ class OsuApiHelper extends CacheManager {
             }
 
             const mapsetData = await osuApi.getBeatmapset(mapsetId);
-
             let filteredMapset = BeatmapsFilter.filterBeatmapset(mapsetData);
             //filteredMapset is a reference, so mutating it affects the returned value.
             this.setBeatmapset(filteredMapset);
@@ -29,10 +28,11 @@ class OsuApiHelper extends CacheManager {
             if (err.message.includes('404')) {
                 if (registerInBDIf404) {
                     this.registerEmptyBeatmapset(mapsetId);
+                    console.warn(`Required beatmapset ${mapsetId} does not exist.`);
                 }
             }
 
-            return null;
+            throw err;
         }
     }
 

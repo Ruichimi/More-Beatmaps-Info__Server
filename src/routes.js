@@ -12,10 +12,10 @@ const authenticateToken = require('./middlewares/jwt');
 const verifyIPBan = require('./middlewares/verifyIPBan');
 
 router.get('/', requestLimit(7, 60), (req, res) => {
-  res.send('Hi! This is MBI 🌸');
+    res.send('Hi! This is MBI 🌸');
 });
 
-router.post('/api/token', requestLimit(10, 60), (req, res) => {
+router.post('/api/token', requestLimit(5, 60), (req, res) => {
     console.log('Запрос на новый токен');
     const user = { id: uuidv4() };
     users.addActiveUser(user, req.ip);
@@ -27,6 +27,8 @@ router.get('/api/MapsetsData', verifyIPBan, requestLimit(200, 60), authenticateT
     const mapsetIds = req.query.mapsetsIds ? req.query.mapsetsIds.split(',') : [];
     let result = {};
 
+    //console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} | mapsetsIds: [${mapsetIds.join(', ')}]`);
+
     if (!Array.isArray(mapsetIds) || mapsetIds.length === 0) {
         return res.status(400).send('Expected an array of items');
     }
@@ -34,11 +36,14 @@ router.get('/api/MapsetsData', verifyIPBan, requestLimit(200, 60), authenticateT
     try {
         for (const mapsetId of mapsetIds) {
             result[mapsetId] = await OsuApi.getMapsetData(mapsetId);
-            //console.log(result[item]);
         }
 
         res.status(200).json(result);
     } catch (err) {
+        if (err instanceof Error && err.message.startsWith('Too many requests to osu api')) {
+            res.status(503).json({ error: "Server is currently overloaded, please try again later" });
+            return;
+        }
         console.error("Failed to get data:", err);
         res.status(500).json({ error: "failed to get data" });
     }
@@ -47,7 +52,9 @@ router.get('/api/MapsetsData', verifyIPBan, requestLimit(200, 60), authenticateT
 router.get('/api/cachedBeatmapsData', verifyIPBan, requestLimit(200, 60), authenticateToken, async (req, res) => {
     const beatmapIds = req.query.beatmapsIds ? req.query.beatmapsIds.split(',') : [];
     let result = {};
-    //console.log('Trying to get cached data to beatmaps\n', beatmapIds);
+
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} | beatmapsIds: [${beatmapIds.join(', ')}]`);
+
     if (!Array.isArray(beatmapIds) || beatmapIds.length === 0) {
         return res.status(400).send('Expected an array of items');
     }
