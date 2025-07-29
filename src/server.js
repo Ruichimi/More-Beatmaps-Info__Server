@@ -11,9 +11,11 @@ const { commandsRunning } = require('./commands/ServerRunningCommandsInterface')
 const OsuApi = require('./services/OsuApi/OsuApiHelper');
 const BeatmapsLoader = require('./services/OsuApi/BeatmapsLoader');
 const users = require('$/models/users');
+const requestLogger = require('./middlewares/requestsLogger');
 
 app.set('trust proxy', 1);
 app.use(express.json({ limit: '320kb' }));
+app.use(requestLogger);
 
 global.getTime = () => {
     const now = new Date();
@@ -35,10 +37,10 @@ app.listen(port, '127.0.0.1', async () => {
 });
 
 const fileCacheCommands = {
-    "size-bs": async () => console.log('Размер долгого кеша (beatmapset):',
+    "size-bs": async () => console.log('DB Cache size (beatmapset):',
         await OsuApi.getCacheSize('beatmapset')),
 
-    "size-bm": async () => console.log('Размер долгого кеша (beatmap):',
+    "size-bm": async () => console.log('DB Cache size (beatmap):',
         await OsuApi.getCacheSize('beatmap')),
 
     "bs": (id) => OsuApi.getObjectByIdFromDB(id, 'beatmapset'),
@@ -60,7 +62,7 @@ const functionCommands = {
 }
 
 const usersCommands = {
-    "users": (raw) => console.log('Список всех пользователей\n', users.getAllUsers(raw)),
+    "users": (raw) => console.log('List of all users\n', users.getAllUsers(raw)),
     "user": (numOrIP, raw) => console.log(users.getUserByIdCounterOrIP(numOrIP, !raw)),
     "ban-ip": (ip) => users.banIP(ip),
     "unban-ip": (ip) => users.unbanIP(ip),

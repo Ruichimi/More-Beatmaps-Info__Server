@@ -120,7 +120,7 @@ class OsuApiRequestProcessor {
 
             if (this.logging) {
                 const endTime = performance.now();
-                console.log(`Время запроса beatmapset ${mapsetId}: ${(endTime - startTime).toFixed(2)} мс`);
+                console.log(`Beatmapset request time for ${mapsetId}: ${(endTime - startTime).toFixed(2)} ms`);
             }
 
             return beatmapData;

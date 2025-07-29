@@ -14,7 +14,7 @@ class DBCacher {
     getTableNameByObjectType(objectType) {
         if (objectType === 'beatmapset') return 'mapsets';
         if (objectType === 'beatmap') return 'beatmaps';
-        throw new Error(`File cacher error: unknown object type '${objectType}'`);
+        throw new Error(`Unknown object type '${objectType}'`);
     }
 
     async getObjectById(objectId, objectType) {
@@ -38,10 +38,10 @@ class DBCacher {
                 const chunkSize = 500;
                 for (let i = 0; i < idsToDelete.length; i += chunkSize) {
                     const chunk = idsToDelete.slice(i, i + chunkSize);
-                    console.log(`Удаляю порцию из ${chunk.length} записей...`);
+                    console.log(`Removing chunk of ${chunk.length} entries...`);
                     await this.deleteEntriesByIds(tableName, chunk);
                 }
-                console.log(`Удалено ${idsToDelete.length} записей из таблицы ${tableName}`);
+                console.log(`Removed ${idsToDelete.length} entries from ${tableName} table`);
             }
         } catch (error) {
             throw new Error(`Failed to clear old entries from ${objectType}: ${error.message}`);

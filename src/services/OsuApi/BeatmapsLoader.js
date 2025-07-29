@@ -24,7 +24,7 @@ class BeatmapsLoader {
 
     async waitForRequestsThisMinuteReset() {
         const waitMs = 60000 - (this.requestsThisMinute.time * 1000) + 200;
-        console.log(`⌛ Ожидаем сброс лимита через ${waitMs}мс`);
+        console.log(`⌛ Waiting for rate limit reset in ${waitMs} ms...`);
         await new Promise(resolve => setTimeout(resolve, waitMs));
     }
 
@@ -37,7 +37,7 @@ class BeatmapsLoader {
             startId++;
         }
 
-        console.log(`✅ Получено ${fetchedCount} карт, фетчинг завершён.`);
+        console.log(`✅ Fetched ${fetchedCount} beatmaps, fetching complete.`);
     }
 
     async fetchBeatmapset(id) {
@@ -50,7 +50,7 @@ class BeatmapsLoader {
 
             this.requestsThisMinute.count++;
             const res = await OsuApi.getMapsetData(id, true);
-            console.log('🎵 Получена карта', id, res);
+            console.log('🎵 Beatmap fetched:', id, res);
         }
     }
 }

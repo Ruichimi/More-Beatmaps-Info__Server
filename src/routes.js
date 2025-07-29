@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 const users = require('$/models/users');
 
 const requestLimit = require('./middlewares/rateLimiters');
-const RequestSizeLimit = require('./middlewares/RequestSizeLimit');
+const RequestSizeLimit = require('./middlewares/requestSizeLimit');
 const authenticateToken = require('./middlewares/jwt');
 const verifyIPBan = require('./middlewares/verifyIPBan');
 
@@ -16,18 +16,20 @@ router.get('/', requestLimit(7, 60), (req, res) => {
 });
 
 router.post('/api/token', requestLimit(5, 60), (req, res) => {
-    console.log('Запрос на новый токен');
-    const user = { id: uuidv4() };
-    users.addActiveUser(user, req.ip);
-    const token = jwt.sign(user, process.env.APP_KEY, { expiresIn: '100h' });
-    res.json({ token });
+   try {
+       const user = { id: uuidv4() };
+       users.addActiveUser(user, req.ip);
+       const token = jwt.sign(user, process.env.APP_KEY, { expiresIn: '100h' });
+       res.json({ token });
+   } catch (error) {
+       console.error("Internal server error:", error);
+       res.status(500).json({ error: "Internal server error" });
+   }
 });
 
 router.get('/api/MapsetsData', verifyIPBan, requestLimit(200, 60), authenticateToken, async (req, res) => {
     const mapsetIds = req.query.mapsetsIds ? req.query.mapsetsIds.split(',') : [];
     let result = {};
-
-    //console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} | mapsetsIds: [${mapsetIds.join(', ')}]`);
 
     if (!Array.isArray(mapsetIds) || mapsetIds.length === 0) {
         return res.status(400).send('Expected an array of items');
@@ -39,21 +41,19 @@ router.get('/api/MapsetsData', verifyIPBan, requestLimit(200, 60), authenticateT
         }
 
         res.status(200).json(result);
-    } catch (err) {
-        if (err instanceof Error && err.message.startsWith('Too many requests to osu api')) {
+    } catch (error) {
+        if (error instanceof Error && error.message.startsWith('Too many requests to osu api')) {
             res.status(503).json({ error: "Server is currently overloaded, please try again later" });
             return;
         }
-        console.error("Failed to get data:", err);
-        res.status(500).json({ error: "failed to get data" });
+        console.error("Receiving data error:", error);
+        res.status(500).json({ error: "Internal server error" });
     }
 });
 
 router.get('/api/cachedBeatmapsData', verifyIPBan, requestLimit(200, 60), authenticateToken, async (req, res) => {
     const beatmapIds = req.query.beatmapsIds ? req.query.beatmapsIds.split(',') : [];
     let result = {};
-
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} | beatmapsIds: [${beatmapIds.join(', ')}]`);
 
     if (!Array.isArray(beatmapIds) || beatmapIds.length === 0) {
         return res.status(400).send('Expected an array of items');
@@ -62,12 +62,11 @@ router.get('/api/cachedBeatmapsData', verifyIPBan, requestLimit(200, 60), authen
     try {
         for (const beatmapId of beatmapIds) {
             result[beatmapId] = await OsuApi.tryGetBeatmapDataFromCache(beatmapId);
-            //console.log(result[item]);
         }
         res.status(200).json(result);
     } catch (error) {
-        console.error("Ошибка получения данных:", error);
-        res.status(500).json({ error: "Ошибка получения данных" });
+        console.error("Receiving data error:", error);
+        res.status(500).json({ error: "Internal server error" });
     }
 });
 
@@ -79,7 +78,7 @@ router.post('/api/BeatmapPP/:id', express.json(), verifyIPBan, requestLimit(15, 
         const calculatedBeatmapData = await OsuApi.getBeatmapData(beatmapId, beatmap);
         res.json(calculatedBeatmapData);
     } catch (error) {
-        res.status(500).json({ error: "Ошибка получения данных" });
+        res.status(500).json({ error: "Internal server error" });
     }
 });
 
@@ -104,7 +103,7 @@ router.post('/api/updateMapset/:id', verifyIPBan, requestLimit(2, 60), authentic
         res.status(200).json(updatedMapset);
     } catch (error) {
         console.error('Failed to remove mapset:', error);
-        res.status(500).json({ error: 'Failed to remove mapset' });
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 

@@ -15,7 +15,7 @@ function commandsRunning(commands) {
         if (commands[command]) {
             commands[command](...commandArgs);
         } else {
-            console.log(`Неизвестная команда: ${command}`);
+            console.log(`Unknown command: ${command}`);
         }
     });
 }

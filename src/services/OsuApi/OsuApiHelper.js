@@ -45,7 +45,6 @@ class OsuApiHelper extends CacheManager {
             const cachedBeatmap = await this.getObject(beatmapId, 'beatmap');
             if (cachedBeatmap) return cachedBeatmap;
 
-            console.log("Getting pp for beatmap: ", beatmapId);
             const calculatedBeatmapData = this.#getCalculatedBeatmapData(beatmapId, beatmapStructure);
             const deepClonedData = JSON.parse(JSON.stringify(calculatedBeatmapData));
 

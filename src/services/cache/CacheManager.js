@@ -54,10 +54,10 @@ class CacheManager {
 
             const objectId = String(object.id);
 
-            await dataBase.setObject(objectId, object,  Date.now(), objectType);
+            await dataBase.setObject(objectId, object, Date.now(), objectType);
             // !This log should be removed before release due to extra DB queries
-            console.log(`${objectType} ${object.id} загруженна в BD`, await dataBase.getObjectCount(objectType));
-        } catch(err) {
+            //console.log(`${objectType} ${object.id} загруженна в BD`, await dataBase.getObjectCount(objectType));
+        } catch (err) {
             throw new Error(`Failed to cache ${objectType} \n${err.message}`);
         }
     }
@@ -73,14 +73,14 @@ class CacheManager {
         }
     }
 
-   /*
-    * Next methods currently using only for commands for testing the cache
-    */
+    /*
+     * Next methods currently using only for commands for testing the cache
+     */
 
     async getCacheSize(objectType) {
         try {
             return await dataBase.getTableStats(objectType);
-        } catch(err) {
+        } catch (err) {
             throw new Error(`Failed to get ${objectType}s cache \n${err.message}`);
         }
     }
@@ -93,7 +93,7 @@ class CacheManager {
             console.log(result);
             console.log(`Operation to get ${objectType} by ID ${id} took ${endTime - startTime} ms`);
         } catch (err) {
-            throw new Error(`Не удалось получить карту из файла кеша\n${err.message}`);
+            throw new Error(`Failed to get map from the DB cache\n${err.message}`);
         }
     }
 
@@ -110,7 +110,7 @@ class CacheManager {
             } else if (cacheType === 'beatmap') {
                 await fake.createFakeBeatmapEntries(amount, maxObjectId, boundSetObject);
             }
-        } catch(err) {
+        } catch (err) {
             throw new Error(`Failed to create fake entries for ${cacheType}\n${err.message}`);
         }
     }
@@ -120,7 +120,7 @@ class CacheManager {
         console.log(archiveObjectCount);
         const cleanStatus = await dataBase.cleanObjectArchive(objectType);
         if (cleanStatus) {
-            console.log(`Таблица для ${objectType} очищена. Убрано: ${archiveObjectCount} записей`);
+            console.log(`Table for ${objectType} cleared. Removed: ${archiveObjectCount} records`);
         }
     }
 }

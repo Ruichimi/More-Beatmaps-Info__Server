@@ -35,7 +35,7 @@ class FakeRecordsMaker {
 
         }
 
-        console.log(`Создано ${numEntries} фейковых записей для mapsets.`);
+        console.log(`Created ${numEntries} fake records for mapsets.`);
     }
 
     async createFakeBeatmapEntries(numEntries, maxObjectId, DBSet) {
@@ -56,7 +56,7 @@ class FakeRecordsMaker {
             DBSet(beatmapId, beatmapData, Date.now(), 'beatmap');
         }
 
-        console.log(`Создано ${numEntries} фейковых записей для beatmaps.`);
+        console.log(`Created ${numEntries} fake records for beatmaps.`);
     }
 }
 

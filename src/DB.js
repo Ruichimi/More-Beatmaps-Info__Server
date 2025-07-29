@@ -10,19 +10,19 @@ class DB {
     constructor(dbFile = "database.db") {
         this.db = new sqlite3.Database(dbFile, (err) => {
             if (err) {
-                console.error("Ошибка при подключении к базе данных:", err.message);
+                console.error("Error connecting to database:", err.message);
             } else {
-                console.log("Успешное подключение к базе данных");
+                console.log("Successfully connected to database");
             }
         });
         this.db.run("PRAGMA journal_mode=WAL;", (err) => {
             if (err) {
-                console.error("Ошибка при установке WAL режима:", err.message);
+                console.error("Error setting WAL mode:", err.message);
             }
         });
         this.db.run("PRAGMA synchronous = NORMAL;", (err) => {
             if (err) {
-                console.error("Ошибка при установке synchronous = NORMAL:", err.message);
+                console.error("Error setting synchronous = NORMAL:", err.message);
             }
         });
         this.getAsync = promisify(this.db.get).bind(this.db);
@@ -70,7 +70,7 @@ class DB {
         queries.forEach((query) => {
             this.db.run(query, (err) => {
                 if (err) {
-                    console.error("Ошибка при создании таблицы:", err.message);
+                    console.error("Error creating table:", err.message);
                 }
             });
         });
@@ -82,9 +82,9 @@ class DB {
     // close() {
     //     this.db.close((err) => {
     //         if (err) {
-    //             console.error("Ошибка при закрытии базы данных:", err.message);
+    //             console.error("Error closing database:", err.message);
     //         } else {
-    //             console.log("База данных закрыта");
+    //             console.log("Database closed");
     //         }
     //     });
     // }
