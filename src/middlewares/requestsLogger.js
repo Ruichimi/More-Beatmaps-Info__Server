@@ -24,7 +24,7 @@ setInterval(() => {
     for (const key in routeRequestsCount) {
         routeRequestsCount[key] = 0;
     }
-}, 0.1 * 60 * 1000);
+}, 5 * 60 * 1000);
 
 setInterval(() => {
     console.log('🧹 Cleaned all requests');
