@@ -1,14 +1,10 @@
 const routeRequestsCount = {};
 
 function requestLogger(req, res, next) {
-    let routeKey = '';
+    if (!req.path.startsWith('/api/')) return next();
 
-    if (req.path.startsWith('/api/')) {
-        const pathAfterApi = req.path.slice(5);
-        routeKey = pathAfterApi.split('/')[0];
-    } else {
-        routeKey = req.path === '/' ? 'root' : req.path.replace(/\//g, '');
-    }
+    const pathAfterApi = req.path.slice(5);
+    const routeKey = pathAfterApi.split('/')[0] || 'root';
 
     if (!routeRequestsCount[routeKey]) {
         routeRequestsCount[routeKey] = 0;
@@ -28,6 +24,13 @@ setInterval(() => {
     for (const key in routeRequestsCount) {
         routeRequestsCount[key] = 0;
     }
-}, 300000);
+}, 0.1 * 60 * 1000);
+
+setInterval(() => {
+    console.log('🧹 Cleaned all requests');
+    for (const key in routeRequestsCount) {
+        delete routeRequestsCount[key];
+    }
+}, 60 * 60 * 1000);
 
 module.exports = requestLogger;
