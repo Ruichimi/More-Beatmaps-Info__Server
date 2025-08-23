@@ -15,7 +15,7 @@ router.get('/', requestLimit(7, 60), (req, res) => {
     res.send('Hi! This is MBI 🌸');
 });
 
-router.post('/api/token', requestLimit(5, 60), (req, res) => {
+router.post('/api/token', requestLimit(7, 60), (req, res) => {
    try {
        const user = { id: uuidv4() };
        const token = jwt.sign(user, process.env.APP_KEY, { expiresIn: '100h' });
@@ -27,7 +27,7 @@ router.post('/api/token', requestLimit(5, 60), (req, res) => {
    }
 });
 
-router.get('/api/MapsetsData', verifyIPBan, requestLimit(200, 60), authenticateToken, async (req, res) => {
+router.get('/api/MapsetsData', verifyIPBan, requestLimit(100, 60), authenticateToken, async (req, res) => {
     const mapsetIds = req.query.mapsetsIds ? req.query.mapsetsIds.split(',') : [];
     let result = {};
 
@@ -51,7 +51,7 @@ router.get('/api/MapsetsData', verifyIPBan, requestLimit(200, 60), authenticateT
     }
 });
 
-router.get('/api/cachedBeatmapsData', verifyIPBan, requestLimit(200, 60), authenticateToken, async (req, res) => {
+router.get('/api/cachedBeatmapsData', verifyIPBan, requestLimit(500, 90), authenticateToken, async (req, res) => {
     const beatmapIds = req.query.beatmapsIds ? req.query.beatmapsIds.split(',') : [];
     let result = {};
 
@@ -82,7 +82,7 @@ router.post('/api/BeatmapPP/:id', express.json(), verifyIPBan, requestLimit(15, 
     }
 });
 
-router.post('/api/updateMapset/:id', verifyIPBan, requestLimit(100, 60), authenticateToken, async (req, res) => {
+router.post('/api/updateMapset/:id', verifyIPBan, requestLimit(4, 60), authenticateToken, async (req, res) => {
     try {
         const mapsetId = req.params.id;
         const mapsetData = await OsuApi.getObject(mapsetId, 'beatmapset');
