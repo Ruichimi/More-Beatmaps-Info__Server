@@ -130,7 +130,6 @@ class Users {
         for (const user of this.activeUsers.values()) {
             if (user.sessionId === sessionId) {
                 foundUser = user;
-                user.sessionId = 20;
                 break;
             }
         }
