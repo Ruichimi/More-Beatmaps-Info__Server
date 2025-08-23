@@ -10,7 +10,7 @@ const db = require('$/DB.js');
  * Collected data: the client's IP address and the URL of the requested route.
  * This data is stored only in RAM for the duration of a single session,
  * is not transmitted elsewhere, and is accessible only to the server administrator.
- * It's applies to the entire project.
+ * It applies to the entire project.
  *
  * Exception: IP addresses manually blocked by the administrator due to DDoS activity
  * are stored in a database to prevent repeated attempts until they are unblocked.
@@ -70,7 +70,6 @@ class Users {
         this.activeUsers.set(clientIP, user);
     }
 
-
     getAllUsers(raw = false) {
         const users = [];
 
@@ -105,7 +104,6 @@ class Users {
             .join(', ');
     }
 
-
     getUserByIdCounterOrIP(userIdentificator, formated = false) {
         if (userIdentificator.includes('.')) {
             return this.getUserByIP(userIdentificator, formated);
@@ -126,10 +124,13 @@ class Users {
     }
 
     getUserBySessionId(sessionId, formated = false) {
+        if (!sessionId) return null;
+
         let foundUser = null;
         for (const user of this.activeUsers.values()) {
             if (user.sessionId === sessionId) {
                 foundUser = user;
+                user.sessionId = 20;
                 break;
             }
         }

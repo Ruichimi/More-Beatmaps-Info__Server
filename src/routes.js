@@ -18,8 +18,8 @@ router.get('/', requestLimit(7, 60), (req, res) => {
 router.post('/api/token', requestLimit(5, 60), (req, res) => {
    try {
        const user = { id: uuidv4() };
-       users.addActiveUser(user, req.ip);
        const token = jwt.sign(user, process.env.APP_KEY, { expiresIn: '100h' });
+       users.addActiveUser(user, req.ip);
        res.json({ token });
    } catch (error) {
        console.error("Internal server error:", error);
@@ -82,7 +82,7 @@ router.post('/api/BeatmapPP/:id', express.json(), verifyIPBan, requestLimit(15, 
     }
 });
 
-router.post('/api/updateMapset/:id', verifyIPBan, requestLimit(2, 60), authenticateToken, async (req, res) => {
+router.post('/api/updateMapset/:id', verifyIPBan, requestLimit(100, 60), authenticateToken, async (req, res) => {
     try {
         const mapsetId = req.params.id;
         const mapsetData = await OsuApi.getObject(mapsetId, 'beatmapset');
