@@ -13,6 +13,7 @@ const BeatmapsLoader = require('./services/OsuApi/BeatmapsLoader');
 const users = require('$/models/users');
 const requestLogger = require('./middlewares/requestsLogger');
 
+app.use(express.static('public'));
 app.set('trust proxy', 1);
 app.use(express.json({ limit: '320kb' }));
 app.use(requestLogger);
