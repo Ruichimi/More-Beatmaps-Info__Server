@@ -1,5 +1,6 @@
 .idea
 .env
+public
 TODO.txt
 node_modules
 beatmapsCache.json
