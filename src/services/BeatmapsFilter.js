@@ -11,13 +11,21 @@ class BeatmapsFilter {
             Object.entries(rawObject).filter(([key]) => allowedFields.includes(key))
         );
 
-        if (filteredObject.beatmaps && Array.isArray(filteredObject.beatmaps)) {
+        if (Array.isArray(filteredObject.beatmaps)) {
             filteredObject.beatmaps = filteredObject.beatmaps.map(beatmap =>
                 Object.fromEntries(
-                    Object.entries(beatmap).filter(([key]) => allowedFieldsBeatmap.includes(key))
+                    Object.entries(beatmap)
+                        .filter(([key]) => allowedFieldsBeatmap.includes(key))
+                        .map(([key, value]) => {
+                            if (key === 'difficulty_rating' && typeof value === 'number') {
+                                return [key, Math.round(value * 100) / 100];
+                            }
+                            return [key, value];
+                        })
                 )
             );
         }
+
         return this.filterBeatmapsetDate(filteredObject);
     }
 
