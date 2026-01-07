@@ -48,7 +48,6 @@ class DBCacher {
         }
     }
 
-
     async fetchOldestEntries(tableName, limit) {
         return await db.allAsync(`
             SELECT id

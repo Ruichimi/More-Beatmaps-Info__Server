@@ -64,6 +64,14 @@ class DB {
                   id         INTEGER PRIMARY KEY AUTOINCREMENT ,
                   ip       TEXT    NOT NULL,
                   created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+              );`,
+            `CREATE TABLE IF NOT EXISTS feedbacks
+              (
+                  id         INTEGER PRIMARY KEY AUTOINCREMENT ,
+                  type       TEXT NOT NULL,
+                  message    TEXT NOT NULL,
+                  email      TEXT,
+                  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
               );`
         ];
 

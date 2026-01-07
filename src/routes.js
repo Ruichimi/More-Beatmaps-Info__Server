@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const OsuApi = require('./services/OsuApi/OsuApiHelper');
+const Feedback = require('./services/FeedbackService');
 const { v4: uuidv4 } = require('uuid');
 
 const jwt = require('jsonwebtoken');
@@ -10,6 +11,21 @@ const requestLimit = require('./middlewares/rateLimiters');
 const RequestSizeLimit = require('./middlewares/requestSizeLimit');
 const authenticateToken = require('./middlewares/jwt');
 const verifyIPBan = require('./middlewares/verifyIPBan');
+
+router.post('/api/feedback', requestLimit(10, 60), async (req, res) => {
+    try {
+        const feedback = {
+            email: req.body.email,
+            type: req.body.type,
+            message: req.body.message
+        };
+        await Feedback.create(feedback);
+
+        res.status(200).json({ message: 'Feedback sent successfully' });
+    } catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 router.post('/api/token', requestLimit(7, 60), (req, res) => {
    try {
