@@ -1,4 +1,6 @@
 const express = require('express');
+const path = require('path');
+
 const cors = require('cors');
 require('dotenv').config();
 require('module-alias/register');
@@ -13,10 +15,17 @@ const BeatmapsLoader = require('./services/OsuApi/BeatmapsLoader');
 const users = require('$/models/users');
 const requestLogger = require('./middlewares/requestsLogger');
 
-app.use(express.static('public'));
+const serverDir = path.resolve();
+
+app.use(express.static(path.join(serverDir, 'public')));
 app.set('trust proxy', 1);
 app.use(express.json({ limit: '320kb' }));
 app.use(requestLogger);
+
+//Send index.html for all routes except api
+app.get(/^\/(?!api).*/, (req, res) => {
+    res.sendFile(path.join(serverDir, 'public', 'index.html'))
+});
 
 global.getTime = () => {
     const now = new Date();
