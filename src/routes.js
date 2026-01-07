@@ -14,18 +14,25 @@ const verifyIPBan = require('./middlewares/verifyIPBan');
 
 router.post('/api/feedback', requestLimit(10, 60), async (req, res) => {
     try {
-        const feedback = {
+        await Feedback.create({
             email: req.body.email,
             type: req.body.type,
             message: req.body.message
-        };
-        await Feedback.create(feedback);
+        });
 
         res.status(200).json({ message: 'Feedback sent successfully' });
     } catch (error) {
+        if (error.status) {
+            return res.status(error.status).json({
+                error: error.message
+            });
+        }
+
+        console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
 
 router.post('/api/token', requestLimit(7, 60), (req, res) => {
    try {

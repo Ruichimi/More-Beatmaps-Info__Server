@@ -1,17 +1,18 @@
 const db = require('$/DB.js');
+const ValidationError = require('$/errors/ValidationError');
 
 class FeedbackService {
     async create({ type, message, email = null }) {
         if (!type || typeof type !== "string") {
-            throw new Error("Feedback type is required and must be a string");
+            throw new ValidationError("Invalid feedback type");
         }
 
         if (!message || typeof message !== "string") {
-            throw new Error("Feedback message is required and must be a string");
+            throw new ValidationError("Invalid feedback message");
         }
 
         if (email && typeof email !== "string") {
-            throw new Error("Email must be a string");
+            throw new ValidationError("Invalid email");
         }
 
         const query = `
@@ -19,8 +20,13 @@ class FeedbackService {
             VALUES (?, ?, ?)
         `;
 
-        return db.runAsync(query, [type.trim(), message.trim(), email?.trim() ?? null]);
+        return db.runAsync(query, [
+            type.trim(),
+            message.trim(),
+            email?.trim() ?? null
+        ]);
     }
 }
 
 module.exports = new FeedbackService();
+
