@@ -33,7 +33,6 @@ router.post('/api/feedback', requestLimit(10, 60), async (req, res) => {
     }
 });
 
-
 router.post('/api/token', requestLimit(7, 60), (req, res) => {
    try {
        const user = { id: uuidv4() };

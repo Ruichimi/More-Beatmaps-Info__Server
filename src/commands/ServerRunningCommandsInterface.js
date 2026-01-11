@@ -1,6 +1,7 @@
 const readline = require('readline');
+const commands = require('./index.js');
 
-function commandsRunning(commands) {
+const initCommands = () => {
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
@@ -20,4 +21,4 @@ function commandsRunning(commands) {
     });
 }
 
-module.exports = { commandsRunning };
+module.exports = { initCommands };
