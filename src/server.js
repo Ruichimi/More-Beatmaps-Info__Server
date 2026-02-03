@@ -1,12 +1,11 @@
 const express = require('express');
 const path = require('path');
-
 const cors = require('cors');
+
 require('dotenv').config();
 require('module-alias/register');
 
 const app = express();
-
 const port = 3000;
 const routes = require('./routes');
 const { initCommands } = require('$/commands/ServerRunningCommandsInterface');
