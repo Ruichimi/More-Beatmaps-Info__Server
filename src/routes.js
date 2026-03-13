@@ -12,7 +12,7 @@ const RequestSizeLimit = require('./middlewares/requestSizeLimit');
 const authenticateToken = require('./middlewares/jwt');
 const verifyIPBan = require('./middlewares/verifyIPBan');
 
-router.post('/api/feedback', requestLimit(10, 60), async (req, res) => {
+router.post('/api/feedback', requestLimit(10, 60), async (req, res, next) => {
     try {
         await Feedback.create({
             email: req.body.email,
@@ -22,30 +22,22 @@ router.post('/api/feedback', requestLimit(10, 60), async (req, res) => {
 
         res.status(200).json({ message: 'Feedback sent successfully' });
     } catch (error) {
-        if (error.status) {
-            return res.status(error.status).json({
-                error: error.message
-            });
-        }
-
-        console.error(error);
-        res.status(500).json({ error: 'Internal server error' });
+        next(error);
     }
 });
 
-router.post('/api/token', requestLimit(7, 60), (req, res) => {
+router.post('/api/token', requestLimit(7, 60), (req, res, next) => {
    try {
        const user = { id: uuidv4() };
        const token = jwt.sign(user, process.env.APP_KEY, { expiresIn: '100h' });
        users.addActiveUser(user, req.ip);
        res.json({ token });
    } catch (error) {
-       console.error("Internal server error:", error);
-       res.status(500).json({ error: "Internal server error" });
+       next(error);
    }
 });
 
-router.get('/api/MapsetsData', verifyIPBan, requestLimit(100, 60), authenticateToken, async (req, res) => {
+router.get('/api/MapsetsData', verifyIPBan, requestLimit(100, 60), authenticateToken, async (req, res, next) => {
     const mapsetIds = req.query.mapsetsIds ? req.query.mapsetsIds.split(',') : [];
     let result = {};
 
@@ -60,16 +52,11 @@ router.get('/api/MapsetsData', verifyIPBan, requestLimit(100, 60), authenticateT
 
         res.status(200).json(result);
     } catch (error) {
-        if (error instanceof Error && error.message.startsWith('Too many requests to osu api')) {
-            res.status(503).json({ error: "Server is currently overloaded, please try again later" });
-            return;
-        }
-        console.error("Receiving data error:", error);
-        res.status(500).json({ error: "Internal server error" });
+        next(error);
     }
 });
 
-router.get('/api/cachedBeatmapsData', verifyIPBan, requestLimit(500, 90), authenticateToken, async (req, res) => {
+router.get('/api/cachedBeatmapsData', verifyIPBan, requestLimit(500, 90), authenticateToken, async (req, res, next) => {
     const beatmapIds = req.query.beatmapsIds ? req.query.beatmapsIds.split(',') : [];
     let result = {};
 
@@ -83,12 +70,11 @@ router.get('/api/cachedBeatmapsData', verifyIPBan, requestLimit(500, 90), authen
         }
         res.status(200).json(result);
     } catch (error) {
-        console.error("Receiving data error:", error);
-        res.status(500).json({ error: "Internal server error" });
+        next(error);
     }
 });
 
-router.post('/api/BeatmapPP/:id', express.json(), verifyIPBan, requestLimit(15, 60), authenticateToken, RequestSizeLimit, async (req, res) => {
+router.post('/api/BeatmapPP/:id', express.json(), verifyIPBan, requestLimit(15, 60), authenticateToken, RequestSizeLimit, async (req, res, next) => {
     const { id: beatmapId } = req.params;
 
     const { beatmap } = req.body;
@@ -96,11 +82,11 @@ router.post('/api/BeatmapPP/:id', express.json(), verifyIPBan, requestLimit(15, 
         const calculatedBeatmapData = await OsuApi.getBeatmapData(beatmapId, beatmap);
         res.json(calculatedBeatmapData);
     } catch (error) {
-        res.status(500).json({ error: "Internal server error" });
+        next(error);
     }
 });
 
-router.post('/api/updateMapset/:id', verifyIPBan, requestLimit(4, 60), authenticateToken, async (req, res) => {
+router.post('/api/updateMapset/:id', verifyIPBan, requestLimit(4, 60), authenticateToken, async (req, res, next) => {
     try {
         const mapsetId = req.params.id;
         const mapsetData = await OsuApi.getObject(mapsetId, 'beatmapset');
@@ -120,8 +106,7 @@ router.post('/api/updateMapset/:id', verifyIPBan, requestLimit(4, 60), authentic
         const updatedMapset = await OsuApi.getMapsetData(mapsetId);
         res.status(200).json(updatedMapset);
     } catch (error) {
-        console.error('Failed to remove mapset:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        next(error);
     }
 });
 

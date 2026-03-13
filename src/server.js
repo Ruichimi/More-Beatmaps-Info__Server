@@ -10,6 +10,7 @@ const port = 3000;
 const routes = require('./routes');
 const { initCommands } = require('$/commands/ServerRunningCommandsInterface');
 const requestLogger = require('./middlewares/requestsLogger');
+const errorMiddleware = require('./middlewares/error');
 
 const serverDir = path.resolve();
 
@@ -36,6 +37,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(routes);
+
+app.use(errorMiddleware);
 
 //127.0.0.1
 app.listen(port, '127.0.0.1', async () => {
