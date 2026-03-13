@@ -1,5 +1,6 @@
 const OsuApiRequestMaker = require('./OsuApiRequestMaker');
 const osuApi = new OsuApiRequestMaker();
+const AppError = require('$/errors/AppError');
 
 /**
  * Handles rate-limited requests to the osu! API.
@@ -16,6 +17,7 @@ class OsuApiRequestProcessor {
 
         this.rateLimitMin = process.env.OSU_API_RATE_LIMIT_MIN;
         this.requestsThisMinute = 0;
+
 
         this.resetIsSoon = false;
         this.requestsInQueueCountLimitToPostpone = 30;
@@ -97,7 +99,11 @@ class OsuApiRequestProcessor {
                 await new Promise(resolve => setTimeout(resolve, 3000)); // 3s sleep
             } else {
                 this.requestQueue.delete(mapsetId);
-                throw new Error(`Too many requests to osu api. Current limit is ${this.rateLimitMin} per minute`);
+                throw new AppError(
+                    `Too many requests to osu api. Current limit is ${this.rateLimitMin} per minute`,
+                    503,
+                    `SERVER_OVERLOADED`,
+                );
             }
         }
 

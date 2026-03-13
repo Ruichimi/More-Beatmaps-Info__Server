@@ -1,4 +1,5 @@
 const axios = require("$/axios");
+const AppError = require('$/errors/AppError');
 
 class OsuApiRequestMaker {
     constructor() {
@@ -14,13 +15,23 @@ class OsuApiRequestMaker {
     }
 
     async getAccessToken(clientId, clientSecret) {
-        const response = await axios.post('https://osu.ppy.sh/oauth/token', `client_id=${clientId}&client_secret=${clientSecret}&grant_type=client_credentials&scope=public`, {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json',
-            },
-        });
+        try {
+            const response = await axios.post(
+                'https://osu.ppy.sh/oauth/token',
+                `client_id=${clientId}&client_secret=${clientSecret}&grant_type=client_credentials&scope=public`,
+                {
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Accept': 'application/json',
+                    },
+                }
+            );
 
-        return response.data.access_token;
+            return response.data.access_token;
+
+        } catch (error) {
+            this.apiErrorHandler(error);
+        }
     }
 
     async getBeatmapset(mapsetId, measureTime = false) {
@@ -41,12 +52,39 @@ class OsuApiRequestMaker {
 
             return response.data;
         } catch (error) {
-            if (error.response) {
-                throw new Error(String(error.response.status));
-            } else {
-                throw new Error(`Failed to fetch mapset data from osu api server:\n${error.message}`);
-            }
+            this.apiErrorHandler(error);
         }
+    }
+
+    apiErrorHandler(error) {
+        if (error.response) {
+            const status = error.response.status;
+            if (status === 404) {
+                throw new AppError(
+                    "Unexisting beatmapset",
+                    status,
+                    "BEATMAPSET_NOT_FOUND",
+                    error.response.data
+                );
+            }
+
+            throw new AppError(
+                `osu api error: ${error.message}`,
+                status,
+                "OSU_API_ERROR",
+                error.response.data
+            );
+        }
+
+        if (error.request) {
+            throw new AppError(
+                "No response from osu api server",
+                503,
+                "OSU_API_NO_RESPONSE"
+            );
+        }
+
+        throw error;
     }
 }
 

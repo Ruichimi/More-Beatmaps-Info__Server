@@ -1,18 +1,18 @@
 const db = require('$/DB.js');
-const { Errors } = require('$/errors/errors.js');
+const { validationError } = require('$/errors/errors.js');
 
 class FeedbackService {
     async create({ type, message, email = null }) {
         if (!type || typeof type !== "string") {
-            throw Errors.ValidationError("Invalid feedback type");
+            throw validationError("Invalid feedback type");
         }
 
         if (!message || typeof message !== "string") {
-            throw Errors.ValidationError("Invalid feedback message");
+            throw validationError("Invalid feedback message");
         }
 
         if (email && typeof email !== "string") {
-            throw Errors.ValidationError("Invalid email");
+            throw validationError("Invalid email");
         }
 
         const query = `
