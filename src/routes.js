@@ -61,7 +61,10 @@ router.get('/api/cachedBeatmapsData', verifyIPBan, requestLimit(500, 90), authen
     let result = {};
 
     if (!Array.isArray(beatmapIds) || beatmapIds.length === 0) {
-        return res.status(400).send('Expected an array of items');
+        return res.status(400).json({
+            error: 'Missing beatmapsIds query parameter',
+            example: '?beatmapsIds=5319044'
+        });
     }
 
     try {
@@ -76,8 +79,8 @@ router.get('/api/cachedBeatmapsData', verifyIPBan, requestLimit(500, 90), authen
 
 router.post('/api/BeatmapPP/:id', express.json(), verifyIPBan, requestLimit(15, 60), authenticateToken, RequestSizeLimit, async (req, res, next) => {
     const { id: beatmapId } = req.params;
-
     const { beatmap } = req.body;
+
     try {
         const calculatedBeatmapData = await OsuApi.getBeatmapData(beatmapId, beatmap);
         res.json(calculatedBeatmapData);

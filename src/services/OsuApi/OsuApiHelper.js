@@ -62,7 +62,7 @@ class OsuApiHelper extends CacheManager {
             let filteredFullBeatmapData = BeatmapsFilter.filterCalculatedBeatmapData(fullCalcBeatmapData);
             return {...filteredFullBeatmapData, id: Number(beatmapId)};
         } catch(err) {
-            throw new Error(`Не удалось высчитать данные для карты ${beatmapId}\n${err.message}`);
+            throw new Error(`Failed to calculate data for beatmap ${beatmapId}\n${err.message}`);
         }
     }
 }
