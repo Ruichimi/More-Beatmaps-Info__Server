@@ -3,24 +3,35 @@ const axios = require("$/axios");
 const AppError = require('$/errors/AppError');
 
 let client;
+const testBeatmapId = 5319044;
 
 beforeAll(async () => {
+    process.env.ENABLE_CACHE = '0';
     client = await api();
 });
 
 describe('beatmapPP', () => {
-    test('POST /api/BeatmapPP/:id works', async () => {
-        const beatmapId = 5319044;
-        const beatmapStructure = await getBeatmapStructure(beatmapId);
+    test('returns 200 with valid beatmap structure', async () => {
+        const beatmapStructure = await getBeatmapStructure(testBeatmapId);
 
         const res = await client
-            .post(`/api/BeatmapPP/${beatmapId}`)
+            .post(`/api/BeatmapPP/${testBeatmapId}`)
             .send({
                 beatmap: beatmapStructure
             });
-        console.log(res.text);
 
         expect(res.statusCode).toBe(200);
+    });
+
+    test('returns 401 for invalid beatmap structure', async () => {
+        const res = await client
+            .post(`/api/BeatmapPP/${testBeatmapId}`)
+            .send({
+                beatmap: `${'*'.repeat(50)}`
+            });
+        console.log(123213, res.text);
+
+        expect(res.statusCode).toBe(401);
     });
 });
 

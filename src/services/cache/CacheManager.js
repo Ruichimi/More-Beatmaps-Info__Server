@@ -4,6 +4,8 @@ const fake = require('$/services/FakeRecordsMaker.js');
 
 class CacheManager {
     constructor() {
+        this.enable_cache = process.env.NODE_ENV !== 'test';
+
         //An IDE may show these variables as unused due to indirect usage. Preventing via comments.
         //noinspection JSUnusedGlobalSymbols
         this.beatmapsetsCacheLimit = 3000000;
@@ -16,6 +18,8 @@ class CacheManager {
     }
 
     async getObject(objectId, objectType) {
+        console.log('cache bool', this.enable_cache);
+        if (!this.enable_cache) return;
         const cachedObject = await dataBase.getObjectById(objectId, objectType);
         if (cachedObject) {
             //console.log(`The ${objectType} ${objectId} data received from cache`);

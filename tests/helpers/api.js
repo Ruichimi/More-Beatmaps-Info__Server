@@ -1,8 +1,6 @@
 const request = require('supertest');
-const app = require('$/app');
-const expectedClientId = process.env.EXPECTED_CLIENT_ID;
 
-async function getToken() {
+async function getToken(app, expectedClientId = process.env.EXPECTED_CLIENT_ID) {
     const res = await request(app)
         .post('/api/token')
         .set('x-client-id', expectedClientId);
@@ -11,7 +9,9 @@ async function getToken() {
 }
 
 async function api() {
-    const token = await getToken();
+    const app = require('$/app');
+    const expectedClientId = process.env.EXPECTED_CLIENT_ID;
+    const token = await getToken(app, expectedClientId);
 
     const headers = {
         'x-client-id': expectedClientId,
