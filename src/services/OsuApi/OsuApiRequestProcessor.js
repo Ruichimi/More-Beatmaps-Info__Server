@@ -10,19 +10,18 @@ const AppError = require('$/errors/AppError');
  * But just in case, it might be better to initialize the class on a calendar minute switch.
  */
 class OsuApiRequestProcessor {
-    constructor() {
+    constructor({config = {}, state = {}} = {}) {
         this.initOsuApiInterval();
 
         this.logging = false;
 
-        this.rateLimitMin = process.env.OSU_API_RATE_LIMIT_MIN;
-        this.requestsThisMinute = 0;
+        this.rateLimitMin = config.rateLimitMin ?? Number(process.env.OSU_API_RATE_LIMIT_MIN);
+        this.requestsInQueueCountLimitToPostpone = config.requestsInQueueCountLimitToPostpone ?? 30;
+        this.runScheduleRequestsReset = config.runScheduleRequestsReset ?? true;
 
-
-        this.resetIsSoon = false;
-        this.requestsInQueueCountLimitToPostpone = 30;
-
-        this.requestQueue = new Set();
+        this.requestsThisMinute = state.requestsThisMinute ?? 0;
+        this.resetIsSoon = state.resetIsSoon ?? false;
+        this.requestQueue = state.requestQueue ?? new Set();
     }
 
     /**
@@ -33,17 +32,19 @@ class OsuApiRequestProcessor {
         if (this._resetTimeout1) clearInterval(this._resetTimeout1);
         if (this._resetTimeout2) clearTimeout(this._resetTimeout2);
 
-        this._resetTimeout1 = setInterval(() => {
-            if (this.logging) console.log(`[${getTime()}] The reset will be soon`);
-            this.resetIsSoon = true;
+        if (this.runScheduleRequestsReset) {
+            this._resetTimeout1 = setInterval(() => {
+                if (this.logging) console.log(`[${getTime()}] The reset will be soon`);
+                this.resetIsSoon = true;
 
-            this._resetTimeout2 = setTimeout(() => {
-                if (this.logging) console.log(`[${getTime()}] Schedule requests reset`);
-                this.requestsThisMinute = 0;
-                this.resetIsSoon = false;
+                this._resetTimeout2 = setTimeout(() => {
+                    if (this.logging) console.log(`[${getTime()}] Schedule requests reset`);
+                    this.requestsThisMinute = 0;
+                    this.resetIsSoon = false;
 
-            }, 10000);
-        }, 50000);
+                }, 10000);
+            }, 50000);
+        }
     }
 
     /**
@@ -96,7 +97,7 @@ class OsuApiRequestProcessor {
     async blockOrKeepRequest(mapsetId) {
         while (this.requestsThisMinute >= this.rateLimitMin) {
             if (this.isPostponeRequestConditionsKeep()) {
-                await new Promise(resolve => setTimeout(resolve, 3000)); // 3s sleep
+                await new Promise(resolve => setTimeout(resolve, 3000)); // 3 s sleeps
             } else {
                 this.requestQueue.delete(mapsetId);
                 throw new AppError(
