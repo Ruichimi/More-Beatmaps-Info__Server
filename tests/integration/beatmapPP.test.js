@@ -13,7 +13,6 @@ beforeAll(async () => {
 describe('beatmapPP', () => {
     test('returns 200 with valid beatmap structure', async () => {
         const beatmapStructure = await getBeatmapStructure(testBeatmapId);
-
         const res = await client
             .post(`/api/BeatmapPP/${testBeatmapId}`)
             .send({
@@ -23,15 +22,14 @@ describe('beatmapPP', () => {
         expect(res.statusCode).toBe(200);
     });
 
-    test('returns 401 for invalid beatmap structure', async () => {
+    test('returns 400 for invalid beatmap structure', async () => {
         const res = await client
             .post(`/api/BeatmapPP/${testBeatmapId}`)
             .send({
                 beatmap: `${'*'.repeat(50)}`
             });
-        console.log(123213, res.text);
 
-        expect(res.statusCode).toBe(401);
+        expect(res.statusCode).toBe(400);
     });
 });
 

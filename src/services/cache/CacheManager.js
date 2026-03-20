@@ -18,7 +18,6 @@ class CacheManager {
     }
 
     async getObject(objectId, objectType) {
-        console.log('cache bool', this.enable_cache);
         if (!this.enable_cache) return;
         const cachedObject = await dataBase.getObjectById(objectId, objectType);
         if (cachedObject) {
