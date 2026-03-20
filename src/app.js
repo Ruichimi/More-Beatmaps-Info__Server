@@ -9,7 +9,7 @@ const app = express();
 const routes = require('./routes');
 const { initCommands } = require('$/commands/ServerRunningCommandsInterface');
 const requestLogger = require('./middlewares/requestsLogger');
-const errorMiddleware = require('./middlewares/error');
+const errorMiddleware = require('./middlewares/errorHandler');
 
 const serverDir = path.resolve();
 
