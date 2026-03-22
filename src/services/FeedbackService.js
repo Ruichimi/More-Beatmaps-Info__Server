@@ -1,5 +1,5 @@
 const db = require('$/DB.js');
-const { validationError } = require('$/errors/errors.js');
+const { validationError } = require('$/errors/AppError.js');
 
 class FeedbackService {
     async create({ type, message, email = null }) {

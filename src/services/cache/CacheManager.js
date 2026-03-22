@@ -60,8 +60,8 @@ class CacheManager {
             await dataBase.setObject(objectId, object, Date.now(), objectType);
             // !This log should be removed before release due to extra DB queries
             //console.log(`${objectType} ${object.id} загруженна в BD`, await dataBase.getObjectCount(objectType));
-        } catch (err) {
-            throw new Error(`Failed to cache ${objectType} \n${err.message}`);
+        } catch (error) {
+            throw new Error(`Failed to cache ${objectType} \n${error.message}`);
         }
     }
 
@@ -71,8 +71,8 @@ class CacheManager {
             amount = amount !== null ? Number(amount) : this[`${objectType}sCacheCleanItems`];
             if (isNaN(amount)) throw new Error('Invalid amount');
             return await dataBase.clearOldEntries(objectType, amount);
-        } catch (err) {
-            throw new Error(`Failed to clean ${objectType}s cache \n${err.message}`);
+        } catch (error) {
+            throw new Error(`Failed to clean ${objectType}s cache \n${error.message}`);
         }
     }
 
@@ -83,8 +83,8 @@ class CacheManager {
     async getCacheSize(objectType) {
         try {
             return await dataBase.getTableStats(objectType);
-        } catch (err) {
-            throw new Error(`Failed to get ${objectType}s cache \n${err.message}`);
+        } catch (error) {
+            throw new Error(`Failed to get ${objectType}s cache \n${error.message}`);
         }
     }
 
@@ -95,8 +95,8 @@ class CacheManager {
             const endTime = Date.now();
             console.log(result);
             console.log(`Operation to get ${objectType} by ID ${id} took ${endTime - startTime} ms`);
-        } catch (err) {
-            throw new Error(`Failed to get map from the DB cache\n${err.message}`);
+        } catch (error) {
+            throw new Error(`Failed to get map from the DB cache\n${error.message}`);
         }
     }
 
@@ -113,8 +113,8 @@ class CacheManager {
             } else if (cacheType === 'beatmap') {
                 await fake.createFakeBeatmapEntries(amount, maxObjectId, boundSetObject);
             }
-        } catch (err) {
-            throw new Error(`Failed to create fake entries for ${cacheType}\n${err.message}`);
+        } catch (error) {
+            throw new Error(`Failed to create fake entries for ${cacheType}\n${error.message}`);
         }
     }
 

@@ -6,8 +6,8 @@ class DBCacher {
             const tableName = this.getTableNameByObjectType(objectType);
             await db.runAsync(`INSERT OR IGNORE INTO ${tableName} (id, data, created_at)
                                VALUES (?, ?, ?)`, [objectId, JSON.stringify(object), objectDate]);
-        } catch (err) {
-            throw new Error(`Failed to append data: ${err.message}`);
+        } catch (error) {
+            throw new Error(`Failed to append data: ${error.message}`);
         }
     }
 

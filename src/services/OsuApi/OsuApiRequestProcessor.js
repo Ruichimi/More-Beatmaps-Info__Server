@@ -1,6 +1,6 @@
 const OsuApiRequestMaker = require('./OsuApiRequestMaker');
 const osuApi = new OsuApiRequestMaker();
-const AppError = require('$/errors/AppError');
+const { AppError } = require('$/errors/AppError');
 
 /**
  * Handles rate-limited requests to the osu! API.
@@ -22,29 +22,6 @@ class OsuApiRequestProcessor {
         this.requestsThisMinute = state.requestsThisMinute ?? 0;
         this.resetIsSoon = state.resetIsSoon ?? false;
         this.requestQueue = state.requestQueue ?? new Set();
-    }
-
-    /**
-     * Schedules periodic reset of the request counter.
-     * Reset happens every 60 seconds with a warning flag after 50 seconds.
-     */
-    scheduleRequestsReset() {
-        if (this._resetTimeout1) clearInterval(this._resetTimeout1);
-        if (this._resetTimeout2) clearTimeout(this._resetTimeout2);
-
-        if (this.runScheduleRequestsReset) {
-            this._resetTimeout1 = setInterval(() => {
-                if (this.logging) console.log(`[${getTime()}] The reset will be soon`);
-                this.resetIsSoon = true;
-
-                this._resetTimeout2 = setTimeout(() => {
-                    if (this.logging) console.log(`[${getTime()}] Schedule requests reset`);
-                    this.requestsThisMinute = 0;
-                    this.resetIsSoon = false;
-
-                }, 10000);
-            }, 50000);
-        }
     }
 
     /**
@@ -82,6 +59,8 @@ class OsuApiRequestProcessor {
         let result;
         try {
             result = await this.blockOrKeepRequest(mapsetId);
+        } catch (error) {
+            throw new Error('Failed to get beatmapset data', { cause: error });
         } finally {
             this.requestQueue.delete(mapsetId);
         }
@@ -133,7 +112,30 @@ class OsuApiRequestProcessor {
             return beatmapData;
         } catch (error) {
             this.requestQueue.delete(mapsetId);
-            throw error;
+            throw Error('Failed to request data from osu api', { cause : error });
+        }
+    }
+
+    /**
+     * Schedules periodic reset of the request counter.
+     * Reset happens every 60 seconds with a warning flag after 50 seconds.
+     */
+    scheduleRequestsReset() {
+        if (this._resetTimeout1) clearInterval(this._resetTimeout1);
+        if (this._resetTimeout2) clearTimeout(this._resetTimeout2);
+
+        if (this.runScheduleRequestsReset) {
+            this._resetTimeout1 = setInterval(() => {
+                if (this.logging) console.log(`[${getTime()}] The reset will be soon`);
+                this.resetIsSoon = true;
+
+                this._resetTimeout2 = setTimeout(() => {
+                    if (this.logging) console.log(`[${getTime()}] Schedule requests reset`);
+                    this.requestsThisMinute = 0;
+                    this.resetIsSoon = false;
+
+                }, 10000);
+            }, 50000);
         }
     }
 

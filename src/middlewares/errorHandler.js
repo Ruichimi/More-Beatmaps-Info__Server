@@ -1,24 +1,11 @@
-const AppError = require('$/errors/AppError');
-
-function findAppError(err) {
-    let current = err;
-
-    while (current) {
-        if (current instanceof AppError) {
-            return current;
-        }
-        current = current.cause;
-    }
-
-    return null;
-}
+const { findAppErrorInCauseChain } = require('$/errors/AppError');
 
 module.exports = (err, req, res, next) => {
     console.error(err);
 
-    const appError = findAppError(err);
+    const appError = findAppErrorInCauseChain(err);
 
-    if (appError) {
+    if (appError && appError.statusCode) {
         return res.status(appError.statusCode).json({
             error: appError.message,
             code: appError.code,
