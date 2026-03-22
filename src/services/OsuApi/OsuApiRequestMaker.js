@@ -1,5 +1,5 @@
 const axios = require("$/axios");
-const AppError = require('$/errors/AppError');
+const { AppError } = require('$/errors/AppError');
 
 class OsuApiRequestMaker {
     constructor() {
@@ -69,7 +69,7 @@ class OsuApiRequestMaker {
             }
 
             throw new AppError(
-                `osu api error: ${error.message}`,
+                `Osu api error: ${error.message}`,
                 status,
                 "OSU_API_ERROR",
                 error.response.data
@@ -78,7 +78,7 @@ class OsuApiRequestMaker {
 
         if (error.request) {
             throw new AppError(
-                "No response from osu api server",
+                `No response from osu api server: ${error.message}`,
                 503,
                 "OSU_API_NO_RESPONSE"
             );
