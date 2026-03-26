@@ -12,9 +12,6 @@ class AppError extends Error {
         this.code = resolveFromCause(code, cause, 'code', 'UNKNOWN_ERROR');
         this.details = resolveFromCause(details, cause, 'details', null);
 
-        //TODO: Work out operational error status
-        this.isOperational = true;
-
         if (Error.captureStackTrace) {
             Error.captureStackTrace(this, this.constructor);
         }

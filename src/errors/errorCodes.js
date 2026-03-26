@@ -9,23 +9,27 @@ module.exports = {
         message: 'Requested beatmapset not found',
         statusCode: 404,
         code: 'BEATMAPSET_NOT_FOUND',
+        isOperational: true,
     },
 
     OSU_API_ERROR: {
         message: 'Required external service is unavailable',
         statusCode: 503,
         code: 'SERVICE_DEPENDENCY_UNAVAILABLE',
+        isOperational: true,
     },
 
     SERVER_OVERLOADED: {
         message: 'Server is overloaded, please try again later',
         statusCode: 503,
         code: 'SERVER_OVERLOADED',
+        isOperational: true,
     },
 
     INVALID_BEATMAP_STRUCTURE: {
         message: 'Invalid beatmap structure',
         statusCode: 400,
         code: 'INVALID_BEATMAP_STRUCTURE',
-    },
+        isOperational: true,
+    }
 };

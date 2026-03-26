@@ -49,6 +49,7 @@ const normalizeError = (error) => {
         code: error.code,
         details: error.details ?? null,
         statusCode: error.statusCode ?? 500,
+        isOperational: error.isOperational ?? false,
     }
 }
 

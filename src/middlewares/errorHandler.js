@@ -3,33 +3,28 @@ const ErrorRegistry = require('$/errors/errorRegistry');
 
 module.exports = (err, req, res, next) => {
     try {
-        console.log(err);
-        if (err instanceof AppError) {
-            return sendErrorFromAppError(err, res);
-        } else {
-            const foundAppError = findErrorInCauseChain(err, AppError);
-            if (foundAppError) {
-                return sendErrorFromAppError(foundAppError, res);
-            }
+        console.error(err);
+
+        const appError = findErrorInCauseChain(err, AppError);
+        const errorData = appError ? ErrorRegistry(appError) : null;
+
+        if (errorData?.isOperational) {
+            return sendErrorFromAppError(errorData, res);
         }
 
-        sendDefaultError(res);
+        handleUnOperationalError(res);
     } catch (error) {
         console.error('Error handling error:', error);
-        sendDefaultError(res);
+        handleUnOperationalError(res);
     }
 };
 
-const sendErrorFromAppError = (err, res) => {
-    const ErrorHttpResponse = ErrorRegistry(err);
-
-    if (ErrorHttpResponse) {
-        return res.status(ErrorHttpResponse.statusCode).json({
-            error: ErrorHttpResponse.message,
-            code: ErrorHttpResponse.code,
-            details: ErrorHttpResponse.details
-        });
-    }
+const sendErrorFromAppError = (error, res) => {
+    return res.status(error.statusCode).json({
+        error: error.message,
+        code: error.code,
+        details: error.details
+    });
 }
 
 const sendDefaultError = (res) => {
@@ -38,4 +33,9 @@ const sendDefaultError = (res) => {
         code: null,
         details: null
     });
+}
+
+const handleUnOperationalError = (res) => {
+    console.error(`An unrecoverable error occurred.`); //We don't have to log the error because of previous code
+    sendDefaultError(res);
 }
