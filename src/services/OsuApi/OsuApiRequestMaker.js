@@ -28,7 +28,6 @@ class OsuApiRequestMaker {
             );
 
             return response.data.access_token;
-
         } catch (error) {
             this.apiErrorHandler(error);
         }
@@ -60,27 +59,24 @@ class OsuApiRequestMaker {
         if (error.response) {
             const status = error.response.status;
             if (status === 404) {
-                throw new AppError(
-                    "Unexisting beatmapset",
-                    status,
-                    "BEATMAPSET_NOT_FOUND",
-                    error.response.data
+                throw new AppError("Unexisting beatmapset", {
+                        code: "BEATMAPSET_NOT_FOUND",
+                        cause: error
+                    }
                 );
             }
-
-            throw new AppError(
-                `Osu api error: ${error.message}`,
-                status,
-                "OSU_API_ERROR",
-                error.response.data
+            throw new AppError(`Osu api error: ${error.message}`, {
+                    code: "OSU_API_ERROR",
+                    cause: error
+                }
             );
         }
 
         if (error.request) {
-            throw new AppError(
-                `No response from osu api server: ${error.message}`,
-                503,
-                "OSU_API_NO_RESPONSE"
+            throw new AppError(`No response from osu api server: ${error.message}`, {
+                    code: "OSU_API_ERROR",
+                    cause: error
+                }
             );
         }
 

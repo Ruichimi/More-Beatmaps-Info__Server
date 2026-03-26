@@ -1,11 +1,18 @@
 class AppError extends Error {
-    constructor(message, statusCode = 500, code = 'UNKNOWN_ERROR', details = null, cause = null) {
+    constructor(message, {
+        code,
+        details = null,
+        cause = null,
+    } = {}) {
         super(message, { cause });
 
         this.name = this.constructor.name;
-        this.statusCode = statusCode;
         this.code = code;
-        this.details = details;
+
+        this.code = resolveFromCause(code, cause, 'code', 'UNKNOWN_ERROR');
+        this.details = resolveFromCause(details, cause, 'details', null);
+
+        //TODO: Work out operational error status
         this.isOperational = true;
 
         if (Error.captureStackTrace) {
@@ -14,38 +21,37 @@ class AppError extends Error {
     }
 }
 
-const findAppErrorInCauseChain = (err) => {
+const findErrorInCauseChain = (err, TargetError = AppError) => {
     let current = err;
 
     while (current) {
-        if (current instanceof AppError) {
+        if (current instanceof TargetError) {
             return current;
         }
-        current = current.cause;
+
+        current = current?.cause instanceof Error
+            ? current.cause
+            : null;
     }
 
     return null;
 }
 
-const validationError = (msg = 'Validation error') =>
-    new AppError(msg, 400, 'VALIDATION_ERROR');
+const resolveFromCause = (value, cause, field, fallback = null) => {
+    if (value != null) {
+        return value;
+    }
 
-const notFound = (msg = 'Not found') =>
-    new AppError(msg, 404, 'NOT_FOUND');
+    if (cause instanceof Error) {
+        const parent = findErrorInCauseChain(cause, AppError);
+        return parent?.[field] ?? fallback;
+    }
 
-const userNotFound = () =>
-    new AppError('User not found', 404, 'USER_NOT_FOUND');
+    return fallback;
+};
 
-const invalidToken = () =>
-    new AppError('Invalid token', 401, 'INVALID_TOKEN');
 
 module.exports = {
     AppError,
-
-    findAppErrorInCauseChain: findAppErrorInCauseChain,
-
-    validationError,
-    notFound,
-    userNotFound,
-    invalidToken,
+    findErrorInCauseChain,
 };

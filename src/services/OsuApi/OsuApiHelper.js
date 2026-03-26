@@ -3,7 +3,7 @@ const OsuApiRequestProcessor = require("./OsuApiRequestProcessor");
 const osuApi = new OsuApiRequestProcessor();
 const CacheManager = require("../cache/CacheManager");
 const BeatmapsFilter = require('../BeatmapsFilter');
-const { AppError, findAppErrorInCauseChain } = require('$/errors/AppError');
+const { AppError, findErrorInCauseChain } = require('$/errors/AppError');
 
 class OsuApiHelper extends CacheManager {
     constructor() {
@@ -26,14 +26,14 @@ class OsuApiHelper extends CacheManager {
             this.setBeatmapset(filteredMapset);
             return filteredMapset;
         } catch (error) {
-            if (findAppErrorInCauseChain(error)?.code === 'BEATMAPSET_NOT_FOUND') {
+            if (findErrorInCauseChain(error)?.code === 'BEATMAPSET_NOT_FOUND') {
                 if (registerInBDIf404) {
                     this.registerEmptyBeatmapset(mapsetId);
                     console.warn(`Required beatmapset ${mapsetId} does not exist.`);
                 }
             }
 
-            throw error;
+            throw new Error(`Failed to get mapsetdata for mapset ${mapsetId}`, { cause: error });
         }
     }
 
@@ -43,7 +43,7 @@ class OsuApiHelper extends CacheManager {
 
     async getBeatmapData(beatmapId, beatmapStructure) {
         if (!beatmapStructure.includes?.("[General]")) {
-            throw new AppError('Invalid beatmap structure', 400, 'INVALID_BEATMAP_STRUCTURE');
+            throw new AppError('Invalid beatmap structure', { code: 'INVALID_BEATMAP_STRUCTURE' });
         }
         const cachedBeatmap = await this.getObject(beatmapId, 'beatmap');
         if (cachedBeatmap) return cachedBeatmap;
@@ -58,9 +58,9 @@ class OsuApiHelper extends CacheManager {
     #getCalculatedBeatmapData(beatmapId, beatmapStructure) {
         try {
             const map = new rosu.Beatmap(beatmapStructure);
-            const fullCalcBeatmapData = new rosu.Performance({mods: "CL"}).calculate(map);
+            const fullCalcBeatmapData = new rosu.Performance({ mods: "CL" }).calculate(map);
             let filteredFullBeatmapData = BeatmapsFilter.filterCalculatedBeatmapData(fullCalcBeatmapData);
-            return {...filteredFullBeatmapData, id: Number(beatmapId)};
+            return { ...filteredFullBeatmapData, id: Number(beatmapId) };
         } catch (error) {
             throw new Error(`Failed to calculate data for beatmap ${beatmapId}`, { cause: error });
         }

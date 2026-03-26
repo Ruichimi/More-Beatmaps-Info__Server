@@ -1,6 +1,6 @@
 const api = require('../helpers/api');
 const axios = require("$/axios");
-const AppError = require('$/errors/AppError');
+const { AppError } = require('$/errors/AppError');
 
 let client;
 const testBeatmapId = 5319044;
@@ -46,6 +46,6 @@ async function getBeatmapStructure(beatmapId) {
         }
         return beatmapStructure;
     } else {
-        throw new AppError('No response from osu api server', 502, 'TEST_ERROR');
+        throw new AppError('No response from osu api server', { code: 'TEST_ERROR' });
     }
 }

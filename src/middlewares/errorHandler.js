@@ -1,19 +1,41 @@
-const { findAppErrorInCauseChain } = require('$/errors/AppError');
+const { AppError, findErrorInCauseChain } = require('$/errors/AppError');
+const ErrorRegistry = require('$/errors/errorRegistry');
 
 module.exports = (err, req, res, next) => {
-    console.error(err);
+    try {
+        console.log(err);
+        if (err instanceof AppError) {
+            return sendErrorFromAppError(err, res);
+        } else {
+            const foundAppError = findErrorInCauseChain(err, AppError);
+            if (foundAppError) {
+                return sendErrorFromAppError(foundAppError, res);
+            }
+        }
 
-    const appError = findAppErrorInCauseChain(err);
+        sendDefaultError(res);
+    } catch (error) {
+        console.error('Error handling error:', error);
+        sendDefaultError(res);
+    }
+};
 
-    if (appError && appError.statusCode) {
-        return res.status(appError.statusCode).json({
-            error: appError.message,
-            code: appError.code,
-            details: appError.details
+const sendErrorFromAppError = (err, res) => {
+    const ErrorHttpResponse = ErrorRegistry(err);
+
+    if (ErrorHttpResponse) {
+        return res.status(ErrorHttpResponse.statusCode).json({
+            error: ErrorHttpResponse.message,
+            code: ErrorHttpResponse.code,
+            details: ErrorHttpResponse.details
         });
     }
+}
 
-    res.status(500).json({
-        error: 'Internal server error'
+const sendDefaultError = (res) => {
+    return res.status(500).json({
+        error: 'Internal server error',
+        code: null,
+        details: null
     });
-};
+}

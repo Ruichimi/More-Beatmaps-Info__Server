@@ -10,7 +10,7 @@ const { AppError } = require('$/errors/AppError');
  * But just in case, it might be better to initialize the class on a calendar minute switch.
  */
 class OsuApiRequestProcessor {
-    constructor({config = {}, state = {}} = {}) {
+    constructor({ config = {}, state = {} } = {}) {
         this.initOsuApiInterval();
 
         this.logging = false;
@@ -80,9 +80,9 @@ class OsuApiRequestProcessor {
             } else {
                 this.requestQueue.delete(mapsetId);
                 throw new AppError(
-                    `Too many requests to osu api. Current limit is ${this.rateLimitMin} per minute`,
-                    503,
-                    `SERVER_OVERLOADED`,
+                    `Too many requests to osu api. Current limit is ${this.rateLimitMin} per minute`, {
+                        code: `SERVER_OVERLOADED`,
+                    }
                 );
             }
         }
@@ -112,7 +112,7 @@ class OsuApiRequestProcessor {
             return beatmapData;
         } catch (error) {
             this.requestQueue.delete(mapsetId);
-            throw Error('Failed to request data from osu api', { cause : error });
+            throw Error('Failed to request data from osu api', { cause: error });
         }
     }
 
