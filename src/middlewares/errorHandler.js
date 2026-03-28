@@ -1,15 +1,16 @@
 const { AppError, findErrorInCauseChain } = require('$/errors/AppError');
-const ErrorRegistry = require('$/errors/errorRegistry');
+const ERROR_CODES = require('$/errors/errorCodes');
+const processError = require('$/errors/errorHandler');
 
 module.exports = (err, req, res, next) => {
     try {
         console.error(err);
 
         const appError = findErrorInCauseChain(err, AppError);
-        const errorData = appError ? ErrorRegistry(appError) : null;
+        const errorData = appError ? processError(appError) : null;
 
-        if (errorData?.isOperational) {
-            return sendErrorFromAppError(errorData, res);
+        if (errorData.isOperational) {
+            return sendErrorClient(errorData, res);
         }
 
         handleUnOperationalError(res);
@@ -19,7 +20,7 @@ module.exports = (err, req, res, next) => {
     }
 };
 
-const sendErrorFromAppError = (error, res) => {
+const sendErrorClient = (error, res) => {
     return res.status(error.statusCode).json({
         error: error.message,
         code: error.code,
@@ -28,10 +29,12 @@ const sendErrorFromAppError = (error, res) => {
 }
 
 const sendDefaultError = (res) => {
-    return res.status(500).json({
-        error: 'Internal server error',
-        code: null,
-        details: null
+    const defaultError = ERROR_CODES.DEFAULT_ERROR;
+
+    return res.status(defaultError.statusCode).json({
+        error: defaultError.message,
+        code: defaultError.code,
+        details: defaultError.details
     });
 }
 

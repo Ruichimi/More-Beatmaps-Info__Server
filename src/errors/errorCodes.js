@@ -1,14 +1,22 @@
 module.exports = {
-    UNKNOWN_ERROR: {
-        message: 'Unknown server error',
+    DEFAULT_ERROR: {
+        message: 'Internal server error',
         statusCode: 500,
-        code: 'UNKNOWN_ERROR',
+        code: 'INTERNAL_SERVER_ERROR',
+        details: null,
+    },
+
+    UNKNOWN_ERROR: {
+        defaultServerError: true,
+    },
+
+    BEATMAPS_FILTER_ERROR: {
+        defaultServerError: true,
     },
 
     BEATMAPSET_NOT_FOUND: {
         message: 'Requested beatmapset not found',
         statusCode: 404,
-        code: 'BEATMAPSET_NOT_FOUND',
         isOperational: true,
     },
 
@@ -22,14 +30,12 @@ module.exports = {
     SERVER_OVERLOADED: {
         message: 'Server is overloaded, please try again later',
         statusCode: 503,
-        code: 'SERVER_OVERLOADED',
         isOperational: true,
     },
 
     INVALID_BEATMAP_STRUCTURE: {
         message: 'Invalid beatmap structure',
         statusCode: 400,
-        code: 'INVALID_BEATMAP_STRUCTURE',
         isOperational: true,
     }
 };
