@@ -23,9 +23,14 @@ app.get(/^\/(?!api).*/, (req, res) => {
     res.sendFile(path.join(serverDir, 'public', 'index.html'))
 });
 
-global.getTime = () => {
+global.getTime = (withDate = false) => {
     const now = new Date();
-    return now.toTimeString().split(' ')[0];
+    const time = now.toTimeString().split(' ')[0];
+
+    if (!withDate) return time;
+
+    const date = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    return `${date} ${time}`;
 };
 
 const corsOptions = {

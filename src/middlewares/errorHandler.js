@@ -1,6 +1,7 @@
 const { AppError, findErrorInCauseChain } = require('$/errors/AppError');
 const ERROR_CODES = require('$/errors/errorCodes');
 const processError = require('$/errors/errorHandler');
+const logError = require('$/utils/logging/errorLogger');
 
 module.exports = (err, req, res, next) => {
     try {
@@ -13,10 +14,10 @@ module.exports = (err, req, res, next) => {
             return sendErrorClient(errorData, res);
         }
 
-        handleUnOperationalError(res);
+        handleUnOperationalError(err, res);
     } catch (error) {
         console.error('Error handling error:', error);
-        handleUnOperationalError(res);
+        handleUnOperationalError(error, res);
     }
 };
 
@@ -38,7 +39,8 @@ const sendDefaultError = (res) => {
     });
 }
 
-const handleUnOperationalError = (res) => {
-    console.error(`An unrecoverable error occurred.`); //We don't have to log the error because of previous code
+const handleUnOperationalError = (error, res) => {
+    console.error(`An unrecoverable error occurred.`); //We don't have to log the error in console because of previous code
+    logError(error);
     sendDefaultError(res);
 }
