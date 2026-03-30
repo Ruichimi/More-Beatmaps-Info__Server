@@ -7,7 +7,6 @@ class AppError extends Error {
         super(message, { cause });
 
         this.name = this.constructor.name;
-        this.code = code;
 
         this.code = resolveFromCause(code, cause, 'code', 'UNKNOWN_ERROR');
         this.details = resolveFromCause(details, cause, 'details', null);
@@ -15,6 +14,46 @@ class AppError extends Error {
         if (Error.captureStackTrace) {
             Error.captureStackTrace(this, this.constructor);
         }
+    }
+
+    static match(error) {
+        return new AppErrorMatcher(error);
+    }
+}
+
+class AppErrorMatcher {
+    constructor(error) {
+        this.error = error;
+        this.result = null;
+    }
+
+    case(parentCode, message, options = {}) {
+        if (!this.result && this.error instanceof AppError && this.error.code === parentCode) {
+
+            this.result = new AppError(message, {
+                ...options,
+                cause: this.error,
+            });
+        }
+
+        return this;
+    }
+
+    or(fallbackMessage, fallbackOptions = {}) {
+        if (this.result) return this.result;
+
+        return new AppError(fallbackMessage, {
+            ...fallbackOptions,
+            cause: this.error,
+        });
+    }
+
+    /**
+     * If some case matched, returns the matched error.
+     * If no case matched, returns the original error.
+     */
+    resolve() {
+        return this.result ?? this.error;
     }
 }
 
