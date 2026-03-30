@@ -1,4 +1,26 @@
+const { AppError } = require('$/errors/AppError');
+
 class BeatmapsFilter {
+    filter(object, objectType) {
+        try {
+            switch (objectType) {
+                case 'beatmapset':
+                    return this.filterBeatmapset(object);
+                case 'beatmap':
+                    return this.filterBeatmap(object);
+                case 'calculatedBeatmapData':
+                    return this.filterCalculatedBeatmapData(object);
+                default:
+                    throw new AppError(`Unknown object type: ${objectType}`, { code: 'UNKNOWN_OBJECT_TYPE' });
+            }
+        } catch (error) {
+            throw new AppError(`Failed to filter ${objectType}: ${object?.id}`, {
+                code: `BEATMAPS_FILTER_ERROR`, cause: error,
+            });
+        }
+
+    }
+
     filterBeatmapset(rawObject) {
         const allowedFields = [
             'id', 'beatmaps', 'status', 'ranked_date', 'submitted_date', 'bpm', 'title', 'creator',
@@ -24,16 +46,24 @@ class BeatmapsFilter {
                         })
                 )
             );
-        }
 
-        return this.filterBeatmapsetDate(filteredObject);
+            return this.filterBeatmapsetDate(filteredObject);
+        }
     }
 
-    removeUnusedFieldsFromBeatmapset(beatmapsetObject) {
-        delete beatmapsetObject.creator;
-        delete beatmapsetObject.title;
+    filterBeatmap(beatmap) {
+        if (!beatmap || typeof beatmap !== 'object') {
+            throw new AppError('Invalid beatmap object', { code: 'INVALID_BEATMAP_OBJECT' })
+        }
 
-        return beatmapsetObject;
+        for (let key in beatmap) {
+            if (typeof beatmap[key] === 'number') {
+                beatmap[key] = parseFloat(beatmap[key].toFixed(2));
+            } else if (typeof beatmap[key] === 'object' && beatmap[key] !== null) {
+                this.filterBeatmap(beatmap[key]);
+            }
+        }
+        return beatmap;
     }
 
     filterBeatmapsetDate(beatmapsetData) {
@@ -56,17 +86,6 @@ class BeatmapsFilter {
             },
             pp: fullCalcObject.pp,
         };
-    }
-
-    filterBeatmap(beatmap) {
-        for (let key in beatmap) {
-            if (typeof beatmap[key] === 'number') {
-                beatmap[key] = parseFloat(beatmap[key].toFixed(2));
-            } else if (typeof beatmap[key] === 'object' && beatmap[key] !== null) {
-                this.filterBeatmap(beatmap[key]);
-            }
-        }
-        return beatmap;
     }
 }
 

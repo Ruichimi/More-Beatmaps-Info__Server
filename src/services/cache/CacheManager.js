@@ -1,4 +1,3 @@
-const BeatmapsFilter = require('../BeatmapsFilter');
 const dataBase = require("./DBCacher");
 const fake = require('$/services/FakeRecordsMaker.js');
 
@@ -43,8 +42,7 @@ class CacheManager {
     }
 
     setBeatmap(beatmapData) {
-        let filteredBeatmapData = BeatmapsFilter.filterBeatmap(beatmapData);
-        this.#setObject(filteredBeatmapData, 'beatmap');
+        this.#setObject(beatmapData, 'beatmap');
     }
 
     async #setObject(object, objectType) {

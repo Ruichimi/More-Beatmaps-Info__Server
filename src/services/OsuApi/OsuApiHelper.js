@@ -21,7 +21,7 @@ class OsuApiHelper extends CacheManager {
             }
 
             const mapsetData = await osuApi.getBeatmapset(mapsetId);
-            let filteredMapset = BeatmapsFilter.filterBeatmapset(mapsetData);
+            let filteredMapset = BeatmapsFilter.filter(mapsetData, 'beatmapset');
             //filteredMapset is a reference, so mutating it affects the returned value.
             this.setBeatmapset(filteredMapset);
             return filteredMapset;
@@ -33,7 +33,7 @@ class OsuApiHelper extends CacheManager {
                 }
             }
 
-            throw new Error(`Failed to get mapsetdata for mapset ${mapsetId}`, { cause: error });
+            throw error;
         }
     }
 
@@ -50,8 +50,9 @@ class OsuApiHelper extends CacheManager {
 
         const calculatedBeatmapData = this.#getCalculatedBeatmapData(beatmapId, beatmapStructure);
         const deepClonedData = JSON.parse(JSON.stringify(calculatedBeatmapData));
+        const filteredBeatmapData = BeatmapsFilter.filter(deepClonedData, 'beatmap');
 
-        this.setBeatmap(deepClonedData);
+        this.setBeatmap(filteredBeatmapData);
         return calculatedBeatmapData;
     }
 
@@ -59,7 +60,7 @@ class OsuApiHelper extends CacheManager {
         try {
             const map = new rosu.Beatmap(beatmapStructure);
             const fullCalcBeatmapData = new rosu.Performance({ mods: "CL" }).calculate(map);
-            let filteredFullBeatmapData = BeatmapsFilter.filterCalculatedBeatmapData(fullCalcBeatmapData);
+            let filteredFullBeatmapData = BeatmapsFilter.filter(fullCalcBeatmapData, 'calculatedBeatmapData');
             return { ...filteredFullBeatmapData, id: Number(beatmapId) };
         } catch (error) {
             throw new Error(`Failed to calculate data for beatmap ${beatmapId}`, { cause: error });
