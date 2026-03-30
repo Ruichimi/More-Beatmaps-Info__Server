@@ -19,6 +19,19 @@ class AppError extends Error {
     static match(error) {
         return new AppErrorMatcher(error);
     }
+
+    /**
+     * Default error for validation errors.
+     *
+     *  @param {Object.<string, string | string[]>} fields
+     *  @returns {AppError}
+     */
+    static validationError(fields) {
+        const message = 'Validation failed';
+        const code = `VALIDATION_ERROR`;
+
+        return new AppError(message, { code: code, details: fields });
+    }
 }
 
 class AppErrorMatcher {
