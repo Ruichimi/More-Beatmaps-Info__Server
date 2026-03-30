@@ -6,7 +6,7 @@ require('dotenv').config();
 require('module-alias/register');
 
 const app = express();
-const routes = require('./routes');
+const routes = require('./routes/index.js');
 const { initCommands } = require('$/commands/ServerRunningCommandsInterface');
 const requestLogger = require('./middlewares/requestsLogger');
 const errorMiddleware = require('./middlewares/errorHandler');
