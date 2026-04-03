@@ -37,5 +37,17 @@ module.exports = {
         message: 'Invalid beatmap structure',
         statusCode: 400,
         isOperational: true,
+    },
+
+    FAILED_UPDATE_MAPSET: {
+        message: 'Failed to update mapset. Maybe the wrong ID was provided.',
+        statusCode: 400,
+        isOperational: true,
+    },
+
+    INVALID_MAPSET_ID_CLIENT: {
+        message: 'Invalid mapset ID was provided',
+        statusCode: 400,
+        isOperational: true,
     }
 };

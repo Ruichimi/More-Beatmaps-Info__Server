@@ -7,7 +7,7 @@ require('module-alias/register');
 
 const app = express();
 const routes = require('./routes/index.js');
-const { initCommands } = require('$/commands/ServerRunningCommandsInterface');
+const { initCommands } = require('$/commands/server-running-commands');
 const requestLogger = require('./middlewares/requestsLogger');
 const errorMiddleware = require('./middlewares/errorHandler');
 

@@ -1,34 +1,35 @@
-const OsuApi = require('../services/OsuApi/OsuApiHelper');
-const BeatmapsLoader = require('../services/OsuApi/BeatmapsLoader');
+const CacheManager = require('$/infrastructure/cache-manager');
+const cacheManager = new CacheManager();
+const BeatmapsLoader = require('$/utils/beatmaps-loader');
 const users = require('$/models/users');
 
 const dbCommands = {
     "size-bs": async () => console.log(
         'DB Cache size (beatmapset):',
-        await OsuApi.getCacheSize('beatmapset')
+        await cacheManager.getCacheSize('beatmapset')
     ),
 
     "size-bm": async () => console.log(
         'DB Cache size (beatmap):',
-        await OsuApi.getCacheSize('beatmap')
+        await cacheManager.getCacheSize('beatmap')
     ),
 
-    "bs": (id) => OsuApi.getObjectByIdFromDB(id, 'beatmapset'),
-    "bm": (id) => OsuApi.getObjectByIdFromDB(id, 'beatmap'),
+    "bs": (id) => cacheManager.getObjectByIdFromDB(id, 'beatmapset'),
+    "bm": (id) => cacheManager.getObjectByIdFromDB(id, 'beatmap'),
 };
 
 const functionCommands = {
-    "clean-archive-bs": () => OsuApi.cleanObjectArchive('beatmapset'),
-    "clean-archive-bm": () => OsuApi.cleanObjectArchive('beatmap'),
+    "clean-archive-bs": () => cacheManager.cleanObjectArchive('beatmapset'),
+    "clean-archive-bm": () => cacheManager.cleanObjectArchive('beatmap'),
 
-    "clean-bs": (amount) => OsuApi.cleanItemsAmount('beatmapset', amount),
-    "clean-bm": (amount) => OsuApi.cleanItemsAmount('beatmap', amount),
+    "clean-bs": (amount) => cacheManager.cleanItemsAmount('beatmapset', amount),
+    "clean-bm": (amount) => cacheManager.cleanItemsAmount('beatmap', amount),
 
-    "fake-bs": (amount) => OsuApi.createFakeEntries('beatmapset', amount),
-    "fake-bm": (amount) => OsuApi.createFakeEntries('beatmap', amount),
+    "fake-bs": (amount) => cacheManager.createFakeEntries('beatmapset', amount),
+    "fake-bm": (amount) => cacheManager.createFakeEntries('beatmap', amount),
 
-    "fetch-bss": (timeInMinutes, startId) =>
-        BeatmapsLoader.startFetching(timeInMinutes, startId),
+    "fetch-bss": (amount, startId) =>
+        BeatmapsLoader.startFetching(amount, startId),
 };
 
 const userCommands = {

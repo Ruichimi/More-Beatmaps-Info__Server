@@ -1,4 +1,4 @@
-const OsuApi = require('$/services/OsuApi/OsuApiHelper');
+const mapsetsFacade = require('$/facades/mapsets.facade');
 
 class BeatmapsLoader {
     constructor(requestsInMin) {
@@ -41,18 +41,15 @@ class BeatmapsLoader {
     }
 
     async fetchBeatmapset(id) {
-        const cachedId = await OsuApi.getObject(id, 'beatmapset');
-
-        if (!cachedId) {
-            if (this.requestsThisMinute.count >= this.requestsLimit) {
-                await this.waitForRequestsThisMinuteReset();
-            }
-
-            this.requestsThisMinute.count++;
-            const res = await OsuApi.getMapsetData(id, true);
-            console.log('🎵 Beatmap fetched:', id, res);
+        if (this.requestsThisMinute.count >= this.requestsLimit) {
+            await this.waitForRequestsThisMinuteReset();
         }
+
+        this.requestsThisMinute.count++;
+        const res = await mapsetsFacade.getMapsetData(id);
+        console.log('🎵 Beatmap fetched:', id, res);
     }
+
 }
 
 module.exports = new BeatmapsLoader(250);

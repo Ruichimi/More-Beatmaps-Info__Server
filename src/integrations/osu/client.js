@@ -1,4 +1,4 @@
-const axios = require("$/axios");
+const axios = require("$/infrastructure/axios");
 const { AppError } = require('$/errors/AppError');
 
 class OsuApiRequestMaker {

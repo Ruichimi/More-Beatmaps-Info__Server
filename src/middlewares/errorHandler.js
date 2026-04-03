@@ -5,12 +5,12 @@ const logError = require('$/utils/logging/errorLogger');
 
 module.exports = (err, req, res, next) => {
     try {
-        console.error(err);
+        console.error('An error occurred: ',err);
 
         const appError = findErrorInCauseChain(err, AppError);
         const errorData = appError ? processError(appError) : null;
 
-        if (errorData.isOperational) {
+        if (errorData?.isOperational) {
             return sendErrorClient(errorData, res);
         }
 

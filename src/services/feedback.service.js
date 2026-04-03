@@ -1,4 +1,4 @@
-const db = require('$/DB.js');
+const db = require('$/infrastructure/db-initializer.js');
 const { validationError } = require('$/errors/AppError.js');
 
 class FeedbackService {

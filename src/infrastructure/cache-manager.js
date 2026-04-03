@@ -1,5 +1,5 @@
-const dataBase = require("./DBCacher");
-const fake = require('$/services/FakeRecordsMaker.js');
+const dataBase = require("./cache-repository");
+const fake = require('$/utils/fake-records-maker.js');
 
 class CacheManager {
     constructor() {

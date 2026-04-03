@@ -1,4 +1,4 @@
-const db = require('$/DB.js');
+const db = require('$/infrastructure/db-initializer.js');
 
 /**
  * This class is designed to monitor clients using the server

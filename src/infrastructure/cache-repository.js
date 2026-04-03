@@ -1,6 +1,6 @@
-const db = require('$/DB.js');
+const db = require('$/infrastructure/db-initializer.js');
 
-class DBCacher {
+class CacheRepository {
     async setObject(objectId, object, objectDate, objectType) {
         try {
             const tableName = this.getTableNameByObjectType(objectType);
@@ -123,4 +123,4 @@ class DBCacher {
     }
 }
 
-module.exports = new DBCacher();
+module.exports = new CacheRepository();

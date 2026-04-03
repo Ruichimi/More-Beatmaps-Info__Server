@@ -1,5 +1,5 @@
-const OsuApiRequestMaker = require('./OsuApiRequestMaker');
-const osuApi = new OsuApiRequestMaker();
+const Client = require('./client');
+const client = new Client();
 const { AppError } = require('$/errors/AppError');
 
 /**
@@ -37,7 +37,7 @@ class OsuApiRequestProcessor {
     }
 
     initOsuApi() {
-        osuApi.init().then(() => {
+        client.init().then(() => {
             this.scheduleRequestsReset();
             console.log(`[${getTime()}] Osu api processor initialized`);
         });
@@ -102,7 +102,7 @@ class OsuApiRequestProcessor {
 
             this.requestsThisMinute++;
 
-            const beatmapData = await osuApi.getBeatmapset(mapsetId);
+            const beatmapData = await client.getBeatmapset(mapsetId);
 
             if (this.logging) {
                 const endTime = performance.now();

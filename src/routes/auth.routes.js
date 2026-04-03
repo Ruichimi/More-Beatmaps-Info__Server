@@ -5,7 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
 const users = require('$/models/users');
 
-const requestLimit = require('../middlewares/rateLimiters');
+const requestLimit = require('$/middlewares/rateLimiters');
 
 router.post('/api/token', requestLimit(7, 60), (req, res, next) => {
     try {
