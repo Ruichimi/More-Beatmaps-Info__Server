@@ -25,4 +25,10 @@ router.post(
     beatmapsController.getBeatmapData
 );
 
+router.get(
+    '/api/BeatmapBM/:id',
+    requestLimit(30, 60),
+    beatmapsController.getBeatmapDataById
+);
+
 module.exports = router;

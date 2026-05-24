@@ -3,12 +3,24 @@ const BeatmapsFilter = require("./beatmaps-filter");
 
 exports.buildBeatmapData = (beatmapId, beatmapStructure) => {
     const calculatedBeatmapData = calculateBeatmapFromStructure(beatmapId, beatmapStructure);
-    let filteredFullBeatmapData =
-        BeatmapsFilter.extractBeatmapCalcData(calculatedBeatmapData);
+    const beatmapData = BeatmapsFilter.extractBeatmapCalcData(calculatedBeatmapData);
 
-    const result = { ...filteredFullBeatmapData, id: Number(beatmapId) };
+    return BeatmapsFilter.roundBeatmapValues({
+        ...beatmapData,
+        id: Number(beatmapId),
+    });
+};
 
-    return BeatmapsFilter.roundBeatmapValues(result);
+exports.buildRawBeatmapData = (beatmapId, beatmapStructure) => {
+    let calculatedBeatmapData = calculateBeatmapFromStructure(beatmapId, beatmapStructure);
+    return {
+        ...serializeRawBeatmapData(calculatedBeatmapData),
+        id: Number(beatmapId),
+    };
+}
+
+const serializeRawBeatmapData = (calculatedBeatmapData) => {
+    return calculatedBeatmapData.toJSON();
 }
 
 const calculateBeatmapFromStructure = (beatmapId, beatmapStructure) => {

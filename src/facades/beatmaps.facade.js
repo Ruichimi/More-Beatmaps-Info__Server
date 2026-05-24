@@ -16,3 +16,9 @@ exports.getBeatmapData = async (beatmapId, beatmapStructure) => {
 
     return calculatedBeatmapData;
 }
+
+exports.getRawBeatmapData = (beatmapId, beatmapStructure) => {
+    let res = beatmapsService.buildRawBeatmapData(beatmapId, beatmapStructure);
+    delete res.state;
+    return res;
+}
