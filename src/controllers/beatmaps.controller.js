@@ -13,7 +13,7 @@ exports.getBeatmapsDataFromCache = async (req, res, next) => {
         }
 
         const promises = beatmapIds.map(async (beatmapId) => {
-            const data = await beatmapsFacade.getBeatmapData(beatmapId);
+            const data = await beatmapsFacade.getBeatmapDataCacheOnly(beatmapId);
             return [beatmapId, data];
         });
 

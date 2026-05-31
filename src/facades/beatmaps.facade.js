@@ -6,6 +6,10 @@ exports.getBeatmapDataFromCache = async (beatmapId) => {
     return await cacheManager.getObject(beatmapId, 'beatmap');
 }
 
+exports.getBeatmapDataCacheOnly = async (beatmapId) => {
+    return await cacheManager.getObject(beatmapId, 'beatmap');
+}
+
 exports.getBeatmapData = async (beatmapId, beatmapStructure) => {
     const cachedBeatmap = await cacheManager.getObject(beatmapId, 'beatmap');
     if (cachedBeatmap) return cachedBeatmap;
