@@ -2,6 +2,7 @@ const CacheManager = require('$/infrastructure/cache-manager');
 const cacheManager = new CacheManager();
 const BeatmapsLoader = require('$/utils/beatmaps-loader');
 const users = require('$/models/users');
+const feedbackService = require('$/services/feedback.service');
 
 const dbCommands = {
     "size-bs": async () => console.log(
@@ -16,6 +17,9 @@ const dbCommands = {
 
     "bs": (id) => cacheManager.getObjectByIdFromDB(id, 'beatmapset'),
     "bm": (id) => cacheManager.getObjectByIdFromDB(id, 'beatmap'),
+
+    "questions": async () => console.log(await feedbackService.getAllQuestions()),
+    "suggestions": async () => console.log(await feedbackService.getAllSuggestions()),
 };
 
 const functionCommands = {
