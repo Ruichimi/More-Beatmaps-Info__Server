@@ -26,6 +26,37 @@ class FeedbackService {
             email?.trim() ?? null
         ]);
     }
+
+    async getAllQuestions() {
+        const query = `
+            SELECT *
+            FROM feedbacks
+            WHERE type = 'question'
+        `;
+
+        const records = await db.allAsync(query);
+
+        return records.map(record => ({
+            id: record.id,
+            message: record.message,
+            email: record.email
+        }));
+    }
+
+    async getAllSuggestions() {
+        const query = `
+            SELECT *
+            FROM feedbacks
+            WHERE type = 'suggestion'
+        `;
+
+        const records = await db.allAsync(query);
+
+        return records.map(record => ({
+            id: record.id,
+            message: record.message
+        }));
+    }
 }
 
 module.exports = new FeedbackService();
